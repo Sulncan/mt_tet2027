@@ -101,6 +101,12 @@ td.wrap{white-space:normal;min-width:200px;max-width:340px;text-align:left;color
 td.nm{white-space:normal;text-align:left;max-width:230px;min-width:150px}
 td.nm .t{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
 td.ms{white-space:normal;text-align:left;max-width:260px;min-width:140px;font-size:11px;color:var(--bad)}
+td.sk{text-align:left;white-space:nowrap;height:40px;vertical-align:middle}
+.skc b{display:block;font-weight:650;line-height:1.25}
+.skc span{display:block;font-size:10.5px;color:var(--text-3);line-height:1.2;font-variant-numeric:tabular-nums}
+tr.stot td{background:var(--surface-2);font-weight:650;border-top:1px solid var(--line-strong)}
+tr.big4 td{background:#fff6dc} :root[data-theme="dark"] tr.big4 td{background:#3a3118}
+tr.shT td{background:var(--surface-2);font-weight:650} tr.shD td,tr.shN td{color:var(--text-2);font-size:11.5px}
 td.nt{white-space:normal;text-align:left;min-width:280px;max-width:320px;font-size:11px;color:var(--text-2)}
 td.nt .c,td.ms .c{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 tbody tr:hover td{background:var(--surface-2)}
@@ -144,7 +150,7 @@ td.comc{background:#eef7f1} :root[data-theme="dark"] td.comc{background:#16271d}
 .xbtn{border:0;background:none;color:var(--info);cursor:pointer;font:inherit;padding:0 4px}
 .err{max-width:640px;margin:80px auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px}
 /* countdown */
-.cd{background:linear-gradient(140deg,#fff7ed 0%,#fff 55%);border-color:#f6d7b8}
+.cd{background:linear-gradient(140deg,#fff1e6 0%,#fff8f1 60%,#fff 100%);border-color:#f6d7b8}
 :root[data-theme="dark"] .cd{background:linear-gradient(140deg,#2a1d12 0%,var(--surface) 60%);border-color:#4a3420}
 .cd .now{font-size:12.5px;color:var(--text-2)}
 .cd .clock{font-size:30px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:2px 0}
@@ -185,12 +191,12 @@ td.comc{background:#eef7f1} :root[data-theme="dark"] td.comc{background:#16271d}
     </div>
     <nav class="tabs" id="tabs">
       <button data-t="overview">📊 Overview</button>
-      <button data-t="sku">📦 SKU Checking</button>
+      <button data-t="sku">📦 SKU Tracking</button>
       <button data-t="store">🏬 Store Tracking</button>
       <button data-t="acc">🤝 Accounts</button>
       <button data-t="yag">📈 YAG</button>
       <button data-t="inb">🚚 Inbound Late</button>
-      <button data-t="warn">⚠️ Warning</button>
+      <button data-t="warn">⚠️ Warning / Loss</button>
       <button data-t="stock">🏭 Stock</button>
     </nav>
   </div>
@@ -200,6 +206,7 @@ td.comc{background:#eef7f1} :root[data-theme="dark"] td.comc{background:#16271d}
     <div class="f" data-f="kam"><label for="fKam">KAM</label><select id="fKam"></select></div>
     <div class="f" data-f="ch"><label for="fCh">Channel</label><select id="fCh"></select></div>
     <div class="f" data-f="acc"><label for="fAcc">Account</label><select id="fAcc"></select></div>
+    <div class="f" data-f="a2"><label for="fA2">Account 2</label><select id="fA2"></select></div>
     <div class="f" data-f="sg"><label for="fSg">Sales Group</label><select id="fSg"></select></div>
     <div class="f" data-f="office"><label for="fOff">Office</label><select id="fOff"></select></div>
     <div class="f" data-f="prov"><label for="fProv">Province</label><select id="fProv"></select></div>
@@ -235,14 +242,19 @@ const CHANNELS = [...new Set(ACC.map(a=>a.ch).filter(Boolean))];
 const chOf = acc => CH_OF[acc] || 'Other';
 const accIdx = acc => (acc in ACC_IDX)? ACC_IDX[acc] : 999;
 const P = D.plan.map(r=>{ const o={wh:r[0],whs:r[1],area:r[2],acc:r[3],kam:r[4],sku:r[5],wi:r[6],mi:r[7],box:r[8],amt:r[9]}; o.sg = o.acc==='ECOM'?'KAM Part':(o.area==='North'?'MT North Center':(o.area==='South'?'MT South Center':'')); return o; });
-const STORES = (D.stores||[]).map(r=>({code:r[0],name:r[1],acc:r[2],sg:r[3]||'',office:r[4]||'',dc:r[5]===1,parent:r[6]||'',prov:r[7]||''}));
+const EXCL_OFF=new Set(['','MT North Center','MT South Center']);
+const STORES = (D.stores||[]).map(r=>{ const o={code:r[0],name:r[1],acc:r[2],sg:r[3]||'',office:r[4]||'',dc:r[5]===1,parent:r[6]||'',prov:r[7]||'',ch1:r[8]||'',a2:r[9]||''};
+  o.ex = o.ch1.toLowerCase()==='hyper' && EXCL_OFF.has(o.office); return o; });
 const STORE_BY = {}; STORES.forEach(s=>STORE_BY[s.code]=s);
-const A = D.act.map(r=>{ const o={wh:r[0],whs:r[1],area:r[2],acc:r[3],kam:r[4],sku:r[5],wi:r[6],mi:r[7],date:r[8],ob:r[9],oa:r[10],db:r[11],da:r[12],store:r[13]||'',sg:r[14]||'',bill:r[15]||'',office:r[16]||'',cb:r[17]||0,ca:r[18]||0,xc:r[19]===1};
+const A = D.act.map(r=>{ const o={wh:r[0],whs:r[1],area:r[2],acc:r[3],kam:r[4],sku:r[5],wi:r[6],mi:r[7],date:r[8],ob:r[9],oa:r[10],db:r[11],da:r[12],store:r[13]||'',sg:r[14]||'',bill:r[15]||'',office:r[16]||'',cb:r[17]||0,ca:r[18]||0,xc:r[19]===1,a2:r[20]==null?'':String(r[20]),wb:r[21]||0,wa:r[22]||0,po:r[23]||''};
   const sm=STORE_BY[o.store]; o.prov=sm?sm.prov:''; if(sm&&sm.office) o.office=sm.office; return o; });
 const S = D.stock.map(r=>({wh:r[0],sku:r[1],q:r[2],a:r[3]}));
 const SW = (D.stockW&&D.stockW.length)? D.stockW.map(r=>({wh:r[0],code:r[1],sku:r[2],q:r[3],a:r[4]})) : S.map(r=>({wh:r.wh,code:r.wh,sku:r.sku,q:r.q,a:r.a}));
 const HAS_CANCEL = D.act.length>0 && D.act[0].length>17;
 const Y = D.y26.map(r=>({area:r[0],acc:r[1],kam:r[2],sku:r[3],wi:r[4],box:r[5],amt:r[6]}));
+const PROD=(D.prod||[]).map(r=>({d:r[0],wh:r[1],sku:r[2],sh:r[3],p:r[4],a:r[5],g:r[6]}));
+const HAS_PROD=Array.isArray(D.prod);
+const A2S=[...new Set(A.map(r=>r.a2).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'));
 const PROVS=[...new Set(STORES.map(s=>s.prov).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'));
 const OFFICES=[...new Set(STORES.map(s=>s.office).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'));
 const INB = (D.inbound||[]).map(r=>({center:r[0],account:r[1],acc:r[2],kam:r[3],sku:r[4],name:r[5],dates:r[6]}));
@@ -251,10 +263,10 @@ const SGS = ['MT North Center','MT South Center','KAM Part'];
 const WHS = ['MT Total','YP','MP','DN','DN North','DN South'];
 const DATA_DATE = D.dataDate;
 // ================= STATE =================
-const DEF = {kam:'All',ch:'All',acc:'All',sg:'All',office:'All',prov:'All',wh:'MT Total',brand:'All',status:'All',q:''};
+const DEF = {kam:'All',ch:'All',acc:'All',a2:'All',sg:'All',office:'All',prov:'All',wh:'MT Total',brand:'All',status:'All',q:''};
 const st = {...DEF,unit:'Box',weeks:[D.curWeek||1],tab:'overview',sort:{},open:{},dz:null};
-try{ const s=JSON.parse(localStorage.getItem('tetPortal4')||'{}'); ['kam','tab','unit'].forEach(k=>{ if(s[k]) st[k]=s[k]; }); }catch(e){}
-const save=()=>{ try{ localStorage.setItem('tetPortal4',JSON.stringify({kam:st.kam,tab:st.tab,unit:st.unit})); }catch(e){} };
+try{ const s=JSON.parse(localStorage.getItem('tetPortal5')||'{}'); ['kam','tab','unit'].forEach(k=>{ if(s[k]) st[k]=s[k]; }); }catch(e){}
+const save=()=>{ try{ localStorage.setItem('tetPortal5',JSON.stringify({kam:st.kam,tab:st.tab,unit:st.unit})); }catch(e){} };
 const CUR = D.curWeek||1;
 const SEASON_START='2026-10-26', SEASON_END='2027-02-07', TET_DAY='2027-02-06T00:00:00+07:00';
 const wkSet = () => new Set(st.weeks);
@@ -272,6 +284,8 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const uLbl=()=>st.unit==='Box'?'Box':'M VND';
 const dmy=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
 const prog=(v,lbl)=>{ if(v==null||!isFinite(v)) return '<span class="muted">–</span>'; const c=v>=0.8?'':(v>=0.5?'mid':'low'); return `<span class="prog"><span class="tr"><i class="${c}" style="width:${Math.min(100,v*100)}%"></i></span><span class="pct ${ccls(v)}">${lbl||pct(v)}</span></span>`; };
+const skuCell=(c,nm)=>{ nm=nm!=null?nm:((SKU[c]||{}).name||''); return `<div class="skc"><b>${esc(nm||c)}</b><span>${esc(c)}</span></div>`; };
+const SKC=(k,l,sort)=>({k:k||'code',l:l||'Item name / code',cls:'sk',f:r=>r._ghdr?'':(r._cls&&!r.code?'<b>'+esc(r[k||'code']||'G.Total')+'</b>':(r._tot?`<b>${esc(r.code)}</b>`:skuCell(r[k||'code'],r.name))),sort:sort||(r=>SKU_ORDER.indexOf(r[k||'code']))});
 // ---- pacing: Deli to date / season plan vs plan-weighted pace (plan W44 -> current week / season plan) ----
 const paceOf=o=>o&&o.sP>0? o.pcP/o.sP : null;
 const doneOf=o=>o&&o.sP>0? o.aD/o.sP : null;
@@ -297,8 +311,9 @@ const chOk=r=>st.ch==='All'||chOf(r.acc)===st.ch;
 const brOk=sku=>st.brand==='All'||brandOf(sku)===st.brand;
 const skuQ=sku=>!QSKU||QSKU.has(sku);
 const sgActive=()=>st.sg!=='All';
-const geoActive=()=>st.prov!=='All'||st.office!=='All';
-const geoOk=r=>(st.prov==='All'||r.prov===st.prov)&&(st.office==='All'||r.office===st.office);
+const geoActive=()=>st.prov!=='All'||st.office!=='All'||st.a2!=='All';
+const geoOk=r=>(st.prov==='All'||r.prov===st.prov)&&(st.office==='All'||r.office===st.office)&&(st.a2==='All'||r.a2===st.a2);
+const geoTxt=()=>[st.a2!=='All'?'Account 2 <b>'+esc(st.a2)+'</b>':'',st.prov!=='All'?'Tỉnh <b>'+esc(st.prov)+'</b>':'',st.office!=='All'?'Office <b>'+esc(st.office)+'</b>':''].filter(Boolean).join(' · ');
 function pBlocks(r){ const b=[]; const sga=sgActive();
   if(r.wh){ if(r.wh==='DN'){ if(!sga){b.push('DN','MT Total');} } else b.push(r.wh,'MT Total'); }
   if(r.whs){ b.push(r.whs); if(sga) b.push('DN','MT Total'); }
@@ -312,22 +327,25 @@ function fA(wh){ return A.filter(r=>aBase(r)&&inWh(aBlocks(r),wh)); }
 function stockOf(sku,wh){ wh=wh||st.wh; const whs=wh==='MT Total'?['YP','MP','DN']:(wh.startsWith('DN')?['DN']:[wh]); let s=0; S.forEach(r=>{ if(r.sku===sku&&whs.includes(r.wh)) s+=st.unit==='Box'?r.q:r.a/1e6; }); return s; }
 // ---- core aggregation: by key fn ----
 function agg(keyP,keyA,wh){ const ws=wkSet(), mx=wkMax(), m={};
-  const g=k=>m[k]=m[k]||{wP:0,wO:0,wD:0,cP:0,cO:0,cD:0,sP:0,pcP:0,aD:0,aO:0,accm:{}};
+  const g=k=>m[k]=m[k]||{wP:0,wO:0,wD:0,cP:0,cO:0,cD:0,sP:0,pcP:0,aD:0,aO:0,cC:0,cX:0,cWt:0,wC:0,wX:0,wWt:0,accm:{}};
   fP(wh).forEach(r=>{ const k=keyP(r); if(k==null) return; const o=g(k), v=V(r.box,r.amt); o.sP+=v; if(r.wi>=1&&r.wi<=CUR) o.pcP+=v; if(ws.has(r.wi)) o.wP+=v; if(r.wi>=1&&r.wi<=mx){ o.cP+=v; (o.accm[r.acc]=o.accm[r.acc]||[0,0])[0]+=v; } });
-  fA(wh).forEach(r=>{ const k=keyA(r); if(k==null) return; const o=g(k), ov=V(r.ob,r.oa), dv=V(r.db,r.da); if(r.wi>=1&&r.wi<=CUR){o.aD+=dv;o.aO+=ov;} if(ws.has(r.wi)){o.wO+=ov;o.wD+=dv;} if(r.wi>=1&&r.wi<=mx){ o.cO+=ov;o.cD+=dv; (o.accm[r.acc]=o.accm[r.acc]||[0,0])[1]+=ov; } });
+  fA(wh).forEach(r=>{ const k=keyA(r); if(k==null) return; const o=g(k), ov=V(r.ob,r.oa), dv=V(r.db,r.da); const cv=V(r.cb,r.ca), wv=V(r.wb,r.wa); if(r.wi>=1&&r.wi<=CUR){o.aD+=dv;o.aO+=ov;} if(ws.has(r.wi)){o.wO+=ov;o.wD+=dv;o.wC+=cv;o.wWt+=wv;if(r.xc)o.wX+=cv;} if(r.wi>=1&&r.wi<=mx){ o.cO+=ov;o.cD+=dv;o.cC+=cv;o.cWt+=wv;if(r.xc)o.cX+=cv; (o.accm[r.acc]=o.accm[r.acc]||[0,0])[1]+=ov; } });
   return m; }
-const shortNote=(p,o,d,s)=>{ if(Math.abs(p)<1e-9&&Math.abs(o)<1e-9) return []; const n=[]; if(o>p) n.push('Over Plan'); if(o>p&&d+s<o) n.push('Warning Loss'); if(d+s<p) n.push('Low Stock'); return n.length?n:['OK']; };
-const notePills=n=>!n.length?'<span class="pill mute">–</span>':n.map(x=>`<span class="pill ${x==='OK'?'ok':(x==='Over Plan'?'warn':'bad')}">${x}</span>`).join('');
+const NOTE_TOL=0.10; // ±10%
+const shortNote=(p,o,d,s)=>{ if(Math.abs(p)<1e-9&&Math.abs(o)<1e-9) return []; const n=[]; const over=o>p*(1+NOTE_TOL);
+  if(over) n.push('Over Plan'); if(p>0&&o<p*(1-NOTE_TOL)) n.push('Under Plan'); if(over&&d+s<o) n.push('Warning Loss'); if(p>0&&d+s<p*(1-NOTE_TOL)) n.push('Low Stock'); return n; };
+const notePills=n=>!n.length?'':n.map(x=>`<span class="pill ${x==='Over Plan'?'warn':(x==='Under Plan'?'info':'bad')}">${x}</span>`).join('');
 function top3(accm,dir){ const g=Object.entries(accm).map(([k,v])=>[k,v[1]-v[0]]).filter(x=>dir>0?x[1]>=0.5:x[1]<=-0.5); g.sort((a,b)=>dir>0?(b[1]-a[1]||a[0].localeCompare(b[0])):(a[1]-b[1]||a[0].localeCompare(b[0]))); return g.slice(0,3).map(x=>`${x[0]} ${sgn(x[1])}`).join(' | '); }
 // ================= COVERAGE =================
 let COV=null;
 function coverage(){ // depends on kam/ch/acc/sg/brand/q filters (season to date)
   const planSet={}; // acc|reg -> Set(sku)
-  P.forEach(r=>{ if(!(r.box>0)||!brOk(r.sku)) return; const regs = r.acc==='ECOM'?['T']:(r.area==='North'?['N','T']:(r.area==='South'?['S','T']:['T'])); regs.forEach(g=>{ const k=r.acc+'|'+g; (planSet[k]=planSet[k]||new Set()).add(r.sku); }); });
+  const psum={}; P.forEach(r=>{ if(!brOk(r.sku)) return; const regs = r.acc==='ECOM'?['T']:(r.area==='North'?['N','T']:(r.area==='South'?['S','T']:['T'])); regs.forEach(g=>{ const k=r.acc+'|'+g+'|'+r.sku; psum[k]=(psum[k]||0)+r.box; }); });
+  Object.entries(psum).forEach(([k,v])=>{ if(!(v>0)) return; const i=k.lastIndexOf('|'); const ak=k.slice(0,i); (planSet[ak]=planSet[ak]||new Set()).add(k.slice(i+1)); });
   const deli={}, ord={};
   A.forEach(r=>{ if(!r.store) return; if(r.db>0&&r.bill&&r.bill<=DATA_DATE) (deli[r.store]=deli[r.store]||new Set()).add(r.sku); if(r.ob>0&&r.date&&r.date<=DATA_DATE) (ord[r.store]=ord[r.store]||new Set()).add(r.sku); });
   const rows=[];
-  STORES.forEach(s=>{ if(s.dc) return; const a={acc:s.acc,kam:(ACC.find(x=>x.acc===s.acc)||{}).kam||''};
+  STORES.forEach(s=>{ if(s.dc||s.ex) return; const a={acc:s.acc,kam:(ACC.find(x=>x.acc===s.acc)||{}).kam||''};
     if(!kamOk(a)||!accOk(a)||!chOk(a)) return; if(sgActive()&&s.sg!==st.sg) return; if(!geoOk(s)) return;
     if(QSTORE&&!QSKU&&!QSTORE.has(s.code)) return;
     const reg = s.sg==='MT North Center'?'N':(s.sg==='MT South Center'?'S':'T');
@@ -383,7 +401,7 @@ function table(id,cols,rows,opt){ opt=opt||{};
   if(!rows.length) return '<div class="empty">Nothing matches the current filters.</div>';
   const grp=opt.groups? `<tr class="grp">${opt.groups.map(g=>`<th colspan="${g.n}" class="${g.sep?'sep':''}">${g.l}</th>`).join('')}</tr>`:'';
   const tr=r=>{ if(r._ghdr) return `<tr class="ghdr"><td colspan="${cols.length}">${esc(r._ghdr)}</td></tr>`; return `<tr class="${r._cls||''}">${cols.map(c=>`<td class="${(c.cls||'num')+(c.sep?' sep':'')}">${c.f?c.f(r):esc(r[c.k])}</td>`).join('')}</tr>`; };
-  return `<div class="tbl" style="${opt.maxh?'max-height:'+opt.maxh+'px':''}"><table data-id="${id}"><thead>${grp}<tr>${cols.map(c=>`<th class="${(['l','wrap','nm','ms'].includes(c.cls)?'l':'')+(c.sep?' sep':'')}" data-k="${c.k}" title="Sort">${c.l}${sk&&sk.k===c.k?(sk.d>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${(sk?body.filter(r=>!r._ghdr):body).map(tr).join('')}</tbody></table></div>`; }
+  return `<div class="tbl" style="${opt.maxh?'max-height:'+opt.maxh+'px':''}"><table data-id="${id}"><thead>${grp}<tr>${cols.map(c=>`<th class="${(['l','wrap','nm','ms','sk','nt'].includes(c.cls)?'l':'')+(c.sep?' sep':'')}" data-k="${c.k}" title="Sort">${c.l}${sk&&sk.k===c.k?(sk.d>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${(sk?body.filter(r=>!r._ghdr):body).map(tr).join('')}</tbody></table></div>`; }
 function bindSort(){ main.querySelectorAll('table[data-id] thead tr:not(.grp) th').forEach(th=>th.onclick=()=>{ const id=th.closest('table').dataset.id, k=th.dataset.k, cur=st.sort[id]; st.sort[id]=!cur||cur.k!==k?{k,d:-1}:(cur.d===-1?{k,d:1}:null); render(); }); }
 // value cells helpers
 const cN=(k,l,sep)=>({k,l,sep,f:r=>fmt(r[k])});
@@ -392,7 +410,8 @@ const cP=(k,l,f,sep)=>({k,l,sep,f:r=>`<span class="pct ${pcls(f(r))}">${pct(f(r)
 function weekLbl(){ const s=[...st.weeks].sort((a,b)=>a-b); if(s.length===1) return W[s[0]-1].w; if(s.length===W.length) return 'all weeks'; return s.map(i=>W[i-1].w).join(', '); }
 function totals(wh){ const m=agg(()=>'t',()=>'t',wh).t||{...ZERO}; return m; }
 function y26Sum(maxWi,area){ return Y.filter(r=>!geoActive()&&kamOk(r)&&accOk(r)&&chOk(r)&&brOk(r.sku)&&skuQ(r.sku)&&(!area||r.area===area)&&(sgActive()?((st.sg==='MT North Center'&&r.area==='North')||(st.sg==='MT South Center'&&r.area==='South')):true)&&r.wi>=1&&r.wi<=maxWi).reduce((s,r)=>s+V(r.box,r.amt),0); }
-const ZERO={wP:0,wO:0,wD:0,cP:0,cO:0,cD:0,sP:0,pcP:0,aD:0,aO:0,accm:{}};
+const ZERO={wP:0,wO:0,wD:0,cP:0,cO:0,cD:0,sP:0,pcP:0,aD:0,aO:0,cC:0,cX:0,cWt:0,wC:0,wX:0,wWt:0,accm:{}};
+const cRate=o=>(o.cO+o.cX)>0?o.cC/(o.cO+o.cX):null;
 function cancelStats(rows){ let ob=0,cb=0,xb=0,sb=0; rows.forEach(r=>{ const o=V(r.ob,r.oa), c=V(r.cb,r.ca); ob+=o; if(r.xc){ xb+=c; } else sb+=c; cb+=c; }); const base=ob+xb; return {ob,cb,xb,sb,base,rate:base>0?cb/base:null}; }
 let CLOCK=null;
 const VN_DAYS=['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
@@ -406,12 +425,12 @@ function tickClock(){ const el=document.getElementById('cdClock'); if(!el){ clea
   const s0=Date.parse(SEASON_START+'T00:00:00+07:00'), s1=Date.parse(SEASON_END+'T23:59:59+07:00'), f=Math.min(1,Math.max(0,(now-s0)/(s1-s0)));
   document.getElementById('cdBar').style.width=(f*100)+'%'; document.getElementById('cdPct').textContent=`${Math.round(f*100)}% thời gian mùa Tết đã qua`; }
 function execNotes(){ const out=[]; const t=totals(); const d=doneOf(t), p=paceOf(t);
-  if(geoActive()) out.push(['📍',`Đang lọc theo ${st.prov!=='All'?'tỉnh '+esc(st.prov):''}${st.prov!=='All'&&st.office!=='All'?' · ':''}${st.office!=='All'?'office '+esc(st.office):''}: chỉ có Order/Deli, không có Plan để so pacing.`]);
+  if(geoActive()) out.push(['📍',`Đang lọc ${geoTxt()}: chỉ có Order/Deli, không có Plan để so pacing.`]);
   else if(d!=null){ const c=paceCls(d,p); out.push([c==='g'?'🟢':(c==='o'?'🟠':'🔴'),`Deli lũy kế <b>${pct1(d)}</b> Plan cả kỳ, pacing <b>${pct1(p)}</b> → ${d>=p?'vượt':'chậm'} <b>${Math.abs((d-p)*100).toFixed(1)} điểm</b>.`]);
     const wr=['YP','MP','DN'].map(w=>({w,o:totals(w)})).filter(x=>x.o.sP>0).map(x=>({w:x.w,r:pbSort(x.o),d:doneOf(x.o),p:paceOf(x.o)})).sort((a,b)=>a.r-b.r);
     if(wr.length&&wr[0].r<0.9) out.push(['🏭',`Kho chậm nhất: <b>${wr[0].w}</b> ${pct1(wr[0].d)} vs pacing ${pct1(wr[0].p)}.`]);
     const short=(m,n)=>Object.entries(m).map(([k,o])=>({k,sh:o.pcP-o.aD,r:pbSort(o)})).filter(x=>x.k&&!x.k.startsWith('(')&&x.sh>0&&x.r<0.9).sort((a,b)=>b.sh-a.sh).slice(0,n);
-    const ss=short(agg(r=>r.sku,r=>r.sku),3); if(ss.length) out.push(['📦',`SKU thiếu nhiều nhất so với plan đến ${W[CUR-1].w}: ${ss.map(x=>`<b>${esc(x.k)}</b> ${esc(((SKU[x.k]||{}).name||'').slice(0,22))} (−${fmt(x.sh)})`).join(', ')}.`]);
+    const ss=short(agg(r=>r.sku,r=>r.sku),3); if(ss.length) out.push(['📦',`SKU thiếu nhiều nhất so với plan đến ${W[CUR-1].w}: ${ss.map(x=>`<b>${esc((SKU[x.k]||{}).name||x.k)}</b> <span class="muted">${esc(x.k)}</span> (−${fmt(x.sh)})`).join(', ')}.`]);
     const sa=short(agg(r=>r.acc,r=>r.acc),3); if(sa.length) out.push(['🤝',`Account cần chú ý: ${sa.map(x=>`<b>${esc(x.k)}</b> (−${fmt(x.sh)})`).join(', ')}.`]); }
   const inb=inboundRows().filter(r=>r.late>0); if(inb.length){ const no=inb.filter(r=>r.noOrd).length; out.push(['🚚',`<b>${inb.length}</b> dòng account × SKU trễ lịch nhập (${no} chưa có order, ${inb.length-no} đã order chưa giao).`]); }
   let wl=0; const ms=agg(r=>r.sku,r=>r.sku); Object.entries(ms).forEach(([c,o])=>{ if(o.cO>o.cP&&o.cD+stockOf(c)<o.cO) wl++; }); if(wl) out.push(['⚠️',`<b>${wl}</b> SKU Warning Loss (Order &gt; Plan, Deli + Stock &lt; Order).`]);
@@ -427,7 +446,8 @@ function vOverview(){
     ['📈','YAG (Deli vs Y26)',pct(t.cD/y),`Y26 same Tết weeks ${fmt(y)}`],
     ['🏬','Store coverage',pct(covD/covP),`${nf0.format(cov.filter(r=>r.cov>=1).length)} / ${nf0.format(cov.length)} stores full`],
     ['⏰','Inbound late',nf0.format(late),'account × SKU lines overdue'],
-    ['⏱','Deli / Plan cả kỳ',pct1(doneOf(t)),doneOf(t)==null?'–':`Pacing ${pct1(paceOf(t))} · ${((doneOf(t)-paceOf(t))*100).toFixed(1)}pt`]];
+    ['⏱','Deli / Plan cả kỳ',pct1(doneOf(t)),doneOf(t)==null?'–':`Pacing ${pct1(paceOf(t))} · ${((doneOf(t)-paceOf(t))*100).toFixed(1)}pt`],
+    ['⏳','Waiting · Cancel PTD',fmt(t.cWt),`Cancel ${fmt(t.cC)} = ${pct1(cRate(t))} Order`]];
   const ws=wkSet(); let cp=0,co=0,cd=0; const p=fP(), a=fA(); const yA=Y.filter(r=>!geoActive()&&kamOk(r)&&accOk(r)&&chOk(r)&&brOk(r.sku)&&skuQ(r.sku)&&!geoActive());
   const sP=t.sP;
   const wrows=W.map(w=>{ const pl=p.filter(r=>r.wi===w.i).reduce((s,r)=>s+V(r.box,r.amt),0), or=a.filter(r=>r.wi===w.i).reduce((s,r)=>s+V(r.ob,r.oa),0), de=a.filter(r=>r.wi===w.i).reduce((s,r)=>s+V(r.db,r.da),0); cp+=pl;co+=or;cd+=de;
@@ -445,11 +465,12 @@ function vOverview(){
   const dm={}; a.forEach(r=>{ if(!r.date) return; (dm[r.date]=dm[r.date]||{lbl:dmy(r.date),or:0,de:0,d:r.date}); dm[r.date].or+=V(r.ob,r.oa); dm[r.date].de+=V(r.db,r.da); });
   DAYS=Object.values(dm).sort((x,y)=>x.d<y.d?-1:1);
   const notes=execNotes();
-  main.innerHTML=`<div class="grid ow"><div class="card cd"><div class="now" id="cdDate"></div><div class="clock" id="cdClock">--:--:--</div>
+  main.innerHTML=`<div class="grid ow" style="align-items:stretch"><div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="card cd"><div class="now" id="cdDate"></div><div class="clock" id="cdClock">--:--:--</div>
       <div class="big"><b id="cdDays">–</b><span id="cdHms"></span></div>
-      <div class="tl"><div class="tr"><i id="cdBar" style="width:0"></i></div><div class="lb"><span>26/10/2026 · W44</span><span id="cdPct"></span><span>07/02/2027 · W5</span></div></div>
-      <div class="exec"><h3>📝 Executive summary</h3><ul>${notes.length?notes.map(n=>`<li><span class="e">${n[0]}</span><span>${n[1]}</span></li>`).join(''):'<li>Không có điểm nóng nào.</li>'}</ul></div></div>
-    <div class="grid kpis" style="align-content:start;grid-template-columns:repeat(4,minmax(0,1fr))">${kp.map(k=>`<div class="card kpi"><div class="lab"><span class="ico">${k[0]}</span>${k[1]}</div><div class="val">${k[2]}</div><div class="sub">${k[3]}</div></div>`).join('')}</div></div>
+      <div class="tl"><div class="tr"><i id="cdBar" style="width:0"></i></div><div class="lb"><span>26/10/2026 · W44</span><span id="cdPct"></span><span>07/02/2027 · W5</span></div></div></div>
+      <div class="card" style="flex:1"><div class="exec" style="margin:0;border:0;padding:0"><h3>📝 Executive summary</h3><ul>${notes.length?notes.map(n=>`<li><span class="e">${n[0]}</span><span>${n[1]}</span></li>`).join(''):'<li>Không có điểm nóng nào.</li>'}</ul></div></div></div>
+    <div class="grid kpis" style="grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,1fr)">${kp.map(k=>`<div class="card kpi" style="display:flex;flex-direction:column;justify-content:center"><div class="lab"><span class="ico">${k[0]}</span>${k[1]}</div><div class="val">${k[2]}</div><div class="sub">${k[3]}</div></div>`).join('')}</div></div>
    <div class="card mt"><h2><span class="ico">📅</span>Weekly table<span class="hint">PTD = cumulative from W44 · Pacing = Plan lũy kế / Plan cả kỳ</span></h2>${wt}</div>
    <div class="card mt"><h2><span class="ico">📊</span>Weekly Plan · Order · Deli<span class="hint">${uLbl()} · highlighted = selected weeks · Y26 = same Tết week</span></h2>${chart}</div>
    <div class="card mt"><h2><span class="ico">🏭</span>Tiến độ theo kho<span class="hint">DN North / South là phần của DN</span></h2>${wht}${PLEG()}</div><div class="card mt"><h2><span class="ico">🧭</span>Tiến độ theo Sales Group<span class="hint">plan theo vùng; ECOM = KAM Part</span></h2>${sgt}${PLEG()}</div>
@@ -465,77 +486,128 @@ function drawDaily(){ const box=document.getElementById('dailyBox'); if(!box) re
   box.innerHTML=html+(maxStart>0?`<div class="slider"><span>${esc(DAYS[0].lbl)}</span><input type="range" id="dz" min="0" max="${maxStart}" value="${s}" aria-label="Chọn khoảng ngày"><span>${esc(DAYS[n-1].lbl)}</span><b>${esc(view[0].lbl)} → ${esc(view[view.length-1].lbl)}</b></div>`:'');
   binders.slice(before).forEach(f=>f());
   const r=document.getElementById('dz'); if(r) r.oninput=e=>{ st.dz=+e.target.value; drawDaily(); }; }
-function skuRows(cov){ const m=agg(r=>r.sku,r=>r.sku); const cs=covSku(cov); const late=lateBySku();
-  return SKU_ORDER.filter(c=>brOk(c)&&skuQ(c)).map(c=>{ const o=m[c]||{...ZERO}; const s=stockOf(c); const k=cs[c];
-    return {brand:c&&brandOf(c),code:c,name:SKU[c].name,stk:s,...o,nW:shortNote(o.wP,o.wO,o.wD,s),nC:shortNote(o.cP,o.cO,o.cD,s),cov:k?k[1]/k[0]:null,covN:k?`${k[1]}/${k[0]}`:'',over:top3(o.accm,1),under:top3(o.accm,-1),late:late[c]||0}; })
-   .filter(r=>r.sP||r.cO||r.stk).filter(statusOk); }
+// ================= PRODUCTION / SUPPLY =================
+const p2=n=>String(n).padStart(2,'0');
+function vnToday(){ const n=new Date(); const v=new Date(n.getTime()+(n.getTimezoneOffset()+420)*6e4); return `${v.getFullYear()}-${p2(v.getMonth()+1)}-${p2(v.getDate())}`; }
+const TODAY=vnToday();
+const weekOfDate=d=>W.find(w=>d>=w.start&&d<=addDay(w.start,6))||null;
+const TW=weekOfDate(TODAY), NW=TW?W.find(w=>w.i===TW.i+1)||null:null;
+const TW_END=TW?addDay(TW.start,6):TODAY;
+const PMAP={}; PROD.forEach(r=>{ const k=r.sku+'|'+r.wh+'|'+r.d; const o=PMAP[k]=PMAP[k]||{}; o[r.sh]={p:r.p,a:r.a,g:r.g}; });
+const priceOf=c=>(SKU[c]||{}).price||0;
+const VB=(box,c)=>st.unit==='Box'?box:box*priceOf(c)/1e6;
+function prodWh(wh){ wh=wh||st.wh; return wh==='MT Total'?['MP','YP']:((wh==='MP'||wh==='YP')?[wh]:[]); }
+function prodSum(c,whs,from,to,sh){ sh=sh||'T'; let s=0; PROD.forEach(r=>{ if(r.sh===sh&&r.sku===c&&whs.includes(r.wh)&&r.d>=from&&r.d<=to) s+=r.p; }); return s; }
+function supplyOf(c,o,stk,wh){ const whs=prodWh(wh); const has=whs.length>0;
+  const rem=has?VB(prodSum(c,whs,TODAY,TW_END),c):null, nxt=has&&NW?VB(prodSum(c,whs,NW.start,addDay(NW.start,6)),c):(has?0:null);
+  const need=(o.cP||0)-(o.cD||0), sup=stk+(rem||0)+(nxt||0); const sp=need>0?sup/need:null;
+  let stt=''; if(!(o.cP>0)) stt=''; else if(need<=0) stt='ok|Đã giao đủ PTD'; else if(sp>=1) stt='ok|Đủ hàng'; else if(sp>=0.8) stt='warn|Sát · thiếu '+fmt(need-sup); else stt='bad|Thiếu '+fmt(need-sup);
+  return {rem,nxt,need,sup,sp,stt}; }
+const sttPill=s=>{ if(!s) return ''; const [c,t]=s.split('|'); return `<span class="pill ${c}">${t}</span>`; };
+const SUP_COLS=()=>[cN('stk','Current Stock',true),{k:'rem',l:'Rem. This Week Prod.',f:r=>r.rem==null?'<span class="muted">–</span>':fmt(r.rem)},{k:'nxt',l:'Next Week Prod.',f:r=>r.nxt==null?'<span class="muted">–</span>':fmt(r.nxt)},
+  {k:'sp',l:'Total Supply vs. PTD Plan (%)',f:r=>r.sp==null?'<span class="muted">–</span>':`<span class="pct ${r.sp>=1?'ok':(r.sp>=0.8?'hi':'lo')}">${pct(r.sp)}</span>`,sort:r=>r.sp==null?9e9:r.sp},{k:'stt',l:'Supply Status Note',cls:'l',f:r=>sttPill(r.stt),sort:r=>r.sp==null?9e9:r.sp}];
+const PTD_COLS=()=>[cN('cP','Plan',true),cN('cO','Order'),cP('po','%Order',r=>r.cO/r.cP),cN('cD','Deli',true),cP('pd','%Deli',r=>r.cD/r.cO),cP('ht','%Hit',r=>hit(r.cP,r.cD)),
+  cN('cC','Cancel',true),{k:'pc',l:'%Cancel',f:r=>{ const v=cRate(r); return `<span class="pct ${v>=0.1?'lo':(v>=0.03?'hi':'')}">${pct1(v)}</span>`; },sort:r=>cRate(r)},cN('cWt','Waiting',true)];
+const PTD_GRP=()=>[{l:'PTD · Plan → %Order',n:3,sep:1},{l:'PTD · Deli → %Hit',n:3,sep:1},{l:'Cancel',n:2,sep:1},{l:'Waiting',n:1,sep:1}];
+// ================= SKU TRACKING =================
+function planScope(wh){ const m={}; P.forEach(r=>{ if(kamOk(r)&&accOk(r)&&chOk(r)&&brOk(r.sku)&&(!sgActive()||r.sg===st.sg)&&inWh(pBlocks(r),wh)) m[r.sku]=(m[r.sku]||0)+r.box; }); return new Set(Object.keys(m).filter(k=>m[k]>0)); }
+function skuRows(cov){ const m=agg(r=>r.sku,r=>r.sku); const cs=covSku(cov); const late=lateBySku(); const scope=planScope();
+  return SKU_ORDER.filter(c=>brOk(c)&&skuQ(c)&&scope.has(c)).map(c=>{ const o=m[c]||{...ZERO}; const s=stockOf(c); const k=cs[c]; const sp=supplyOf(c,o,s);
+    return {brand:brandOf(c),code:c,name:SKU[c].name,stk:s,...o,...sp,nW:shortNote(o.wP,o.wO,o.wD,s),nC:shortNote(o.cP,o.cO,o.cD,s),cov:k?k[1]/k[0]:null,covN:k?`${k[1]}/${k[0]}`:'',over:top3(o.accm,1),under:top3(o.accm,-1),late:late[c]||0}; })
+   .filter(statusOk); }
 function statusOk(r){ if(st.status==='All') return true; if(st.status==='Late Inbound') return r.late>0; return (r.nC||[]).includes(st.status)||(r.nW||[]).includes(st.status); }
-const SKU_COLS=(first)=>[first,{k:'stk',l:'Stock'},{k:'wP',l:'Plan',sep:1},{k:'wO',l:'Order'},{k:'wD',l:'Deli'},{k:'nW',l:'Note'},{k:'cP',l:'Plan',sep:1},{k:'cO',l:'Order'},{k:'po',l:'%Order'},{k:'cD',l:'Deli'},{k:'pd',l:'%Deli'},{k:'ht',l:'%Hit'},{k:'nC',l:'Note'},{k:'cov',l:'%Coverage',sep:1}];
-function skuCols(first,withNotes){ const c=[first,cN('stk','Stock'),cN('wP','Plan',true),cN('wO','Order'),cN('wD','Deli'),{k:'nW',l:'Note',cls:'l',f:r=>notePills(r.nW),sort:r=>(r.nW||[]).join()},
-  cN('cP','Plan',true),cN('cO','Order'),cP('po','%Order',r=>r.cO/r.cP),cN('cD','Deli'),cP('pd','%Deli',r=>r.cD/r.cO),cP('ht','%Hit',r=>hit(r.cP,r.cD)),{k:'nC',l:'Note',cls:'l',f:r=>notePills(r.nC),sort:r=>(r.nC||[]).join()},
-  cN('sP','Plan cả kỳ',true),cN('aD','Deli lũy kế'),PB_COL(),
+function skuCols(first,withNotes){ const c=[first,cN('wP','Plan',true),cN('wO','Order'),cN('wD','Deli'),cN('wC','Cancel'),cN('wWt','Waiting'),
+  ...PTD_COLS(),...SUP_COLS(),cN('sP','Plan cả kỳ',true),cN('aD','Deli lũy kế'),PB_COL(),
   {k:'cov',l:'%Coverage',sep:true,f:r=>prog(r.cov,r.cov==null?'':pct(r.cov)),sort:r=>r.cov==null?-1:r.cov}];
-  if(withNotes) c.push({k:'over',l:'Top 3 over plan (PTD)',cls:'wrap'},{k:'under',l:'Top 3 under plan (PTD)',cls:'wrap'});
+  if(withNotes) c.push({k:'over',l:'Top 3 over plan (PTD)',cls:'wrap',sep:true},{k:'under',l:'Top 3 under plan (PTD)',cls:'wrap'});
+  c.push({k:'nW',l:'Note (Week)',cls:'l',sep:true,f:r=>notePills(r.nW||[]),sort:r=>(r.nW||[]).join()},{k:'nC',l:'Note (PTD)',cls:'l',f:r=>notePills(r.nC||[]),sort:r=>(r.nC||[]).join()});
   return c; }
-function kpiRow(list){ return `<div class="grid kpis">${list.map(k=>`<div class="card kpi"><div class="lab"><span class="ico">${k[0]}</span>${k[1]}</div><div class="val"${k[4]?` style="color:${k[4]}"`:''}>${k[2]}</div><div class="sub">${k[3]}</div></div>`).join('')}</div>`; }
+const skuGroups=(withNotes)=>[{l:'',n:1},{l:`Weeks: ${weekLbl()}`,n:5,sep:1},...PTD_GRP(),{l:`Supply · ${TW?TW.w:''} còn lại từ ${dmy(TODAY)} · ${NW?NW.w:''}`,n:5,sep:1},{l:'Tiến độ mùa Tết',n:3,sep:1},{l:'',n:1,sep:1},...(withNotes?[{l:'Top accounts',n:2,sep:1}]:[]),{l:'Note (±10%)',n:2,sep:1}];
+function kpiRow(list,cols){ return `<div class="grid kpis"${cols?` style="grid-template-columns:repeat(${cols},minmax(0,1fr))"`:''}>${list.map(k=>`<div class="card kpi"><div class="lab"><span class="ico">${k[0]}</span>${k[1]}</div><div class="val"${k[4]?` style="color:${k[4]}"`:''}>${k[2]}</div><div class="sub">${k[3]}</div></div>`).join('')}</div>`; }
 function vSku(){ const cov=coverage(); const rows=skuRows(cov);
-  const KS=['stk','wP','wO','wD','cP','cO','cD','sP','pcP','aD','aO'];
-  const bm={}; rows.forEach(r=>{ const o=bm[r.brand]=bm[r.brand]||{brand:r.brand,cv:[0,0],n:0}; KS.forEach(k=>o[k]=(o[k]||0)+r[k]); o.n++; });
+  const KS=['stk','wP','wO','wD','wC','wWt','cP','cO','cD','cC','cX','cWt','sP','pcP','aD','aO','rem','nxt','need','sup'];
+  const bm={}; rows.forEach(r=>{ const o=bm[r.brand]=bm[r.brand]||{brand:r.brand,code:r.brand,_tot:true,cv:[0,0],n:0}; KS.forEach(k=>o[k]=(o[k]||0)+(r[k]||0)); o.n++; });
   const csAll=covSku(cov); rows.forEach(r=>{ const k=csAll[r.code]; if(k){ bm[r.brand].cv[0]+=k[0]; bm[r.brand].cv[1]+=k[1]; } });
-  const brows=Object.values(bm).map(o=>({...o,nW:shortNote(o.wP,o.wO,o.wD,o.stk),nC:shortNote(o.cP,o.cO,o.cD,o.stk),cov:o.cv[0]?o.cv[1]/o.cv[0]:null,cat:(BR[BR_IDX[o.brand]]||{}).cat||''})).sort((a,b)=>(BR_IDX[a.brand]??99)-(BR_IDX[b.brand]??99));
-  const T=brows.reduce((s,o)=>{ KS.forEach(k=>s[k]=(s[k]||0)+o[k]); return s; },{});
-  const cnt=lbl=>rows.filter(r=>(r.nC||[]).includes(lbl)).length;
+  const hasP=prodWh().length>0;
+  const brows=Object.values(bm).map(o=>{ const sp=o.need>0?o.sup/o.need:null; let stt=''; if(o.cP>0){ if(o.need<=0) stt='ok|Đã giao đủ PTD'; else if(sp>=1) stt='ok|Đủ hàng'; else if(sp>=0.8) stt='warn|Sát · thiếu '+fmt(o.need-o.sup); else stt='bad|Thiếu '+fmt(o.need-o.sup); }
+    return {...o,rem:hasP?o.rem:null,nxt:hasP?o.nxt:null,sp,stt,nW:shortNote(o.wP,o.wO,o.wD,o.stk),nC:shortNote(o.cP,o.cO,o.cD,o.stk),cov:o.cv[0]?o.cv[1]/o.cv[0]:null}; }).sort((a,b)=>(BR_IDX[a.brand]??99)-(BR_IDX[b.brand]??99));
+  const T=brows.reduce((s,o)=>{ KS.forEach(k=>s[k]=(s[k]||0)+(o[k]||0)); return s; },{});
+  const grp={}; ['Over Plan','Under Plan','Warning Loss','Low Stock'].forEach(k=>grp[k]=rows.filter(r=>(r.nC||[]).includes(k)));
+  const gapOf=r=>r.cO-r.cP;
   const behind=rows.filter(r=>r.sP>0&&pbSort(r)<0.7).length;
-  const kp=kpiRow([['📦','SKU đang theo dõi',nf0.format(rows.length),`${brows.length} brand`],
+  const kp=kpiRow([['📦','SKU theo dõi',nf0.format(rows.length),`Season Plan > 0 · ${brows.length} brand`],
     ['🎯','Deli / Plan cả kỳ',pct1(doneOf(T)),`Pacing ${pct1(paceOf(T))} · ${fmt(T.aD)} / ${fmt(T.sP)}`],
     ['🔴','SKU chậm pacing',nf0.format(behind),'Deli < 70% mức pacing',behind?'var(--bad)':''],
-    ['📉','Low Stock',nf0.format(cnt('Low Stock')),'Deli + Stock < Plan (PTD)',cnt('Low Stock')?'var(--bad)':''],
-    ['⚠️','Warning Loss',nf0.format(cnt('Warning Loss')),'Order > Plan, thiếu hàng',cnt('Warning Loss')?'var(--warn)':''],
-    ['⬆️','Over Plan',nf0.format(cnt('Over Plan')),'Order > Plan (PTD)'],
-    ['🏬','Coverage TB',pct(rows.filter(r=>r.cov!=null).reduce((s,r)=>s+r.cov,0)/Math.max(1,rows.filter(r=>r.cov!=null).length)),'trung bình các SKU']]);
-  const mxA=Math.max(1,...brows.map(b=>Math.max(b.cP,b.cD)));
-  const acc=brows.filter(b=>b.cP>0||b.cD>0).map(b=>{ const h=hit(b.cP,b.cD), g=b.cD-b.cP, gp=b.cP?g/b.cP:null; const c=h==null?'':(h>=0.9?'ok':(h>=0.7?'hi':'lo'));
-    return `<div class="hbar" title="Plan PTD ${fmt(b.cP)} · Deli PTD ${fmt(b.cD)} · Gap ${sgn(g)}"><div class="nm"><b>${esc(b.brand)}</b></div><div><div class="tr" style="height:6px;margin-bottom:2px"><i style="width:${b.cP/mxA*100}%;background:var(--s-plan)"></i></div><div class="tr" style="height:6px"><i style="width:${b.cD/mxA*100}%;background:var(--s-deli)"></i></div></div><div class="v"><span class="pct ${c}">${pct(h)}</span><div class="muted" style="font-size:10.5px">${gp==null?'':(gp>=0?'+':'')+Math.round(gp*100)+'%'}</div></div></div>`; }).join('');
-  const grps=[{l:'',n:2},{l:`Weeks: ${weekLbl()}`,n:4,sep:1},{l:`PTD W44 → ${W[wkMax()-1].w}`,n:7,sep:1},{l:'Tiến độ mùa Tết',n:3,sep:1},{l:'',n:1,sep:1}];
+    ['✂️','Cancel PTD',fmt(T.cC),`${pct1(cRate(T))} Order gốc`,T.cC?'var(--bad)':''],
+    ['⏳','Waiting PTD',fmt(T.cWt),'Waiting + Remain'],
+    ['🏭','Supply vs nhu cầu PTD',pct(T.need>0?T.sup/T.need:null),`Stock + SX tuần này + tuần sau / (Plan − Deli PTD)`],
+    ['🏬','Coverage TB',pct(rows.filter(r=>r.cov!=null).reduce((s,r)=>s+r.cov,0)/Math.max(1,rows.filter(r=>r.cov!=null).length)),'mẫu số = SKU có Season Plan > 0']]);
+  const mxA=Math.max(1,...brows.map(b=>Math.max(b.cP,b.cO,b.cD)));
+  const bars=brows.filter(b=>b.cP>0||b.cD>0||b.cO>0).map(b=>{ const h=hit(b.cP,b.cD), g=b.cD-b.cP, gp=b.cP?g/b.cP:null; const c=h==null?'':(h>=0.9?'ok':(h>=0.7?'hi':'lo'));
+    return `<div class="hbar" style="grid-template-columns:110px 1fr 92px;margin:7px 0" title="Plan ${fmt(b.cP)} · Order ${fmt(b.cO)} · Deli ${fmt(b.cD)}"><div class="nm"><b>${esc(b.brand)}</b></div><div>
+      <div class="tr" style="height:6px;margin-bottom:2px"><i style="width:${b.cP/mxA*100}%;background:var(--s-plan)"></i></div><div class="tr" style="height:6px;margin-bottom:2px"><i style="width:${b.cO/mxA*100}%;background:var(--s-order)"></i></div><div class="tr" style="height:6px"><i style="width:${b.cD/mxA*100}%;background:var(--s-deli)"></i></div></div>
+      <div class="v"><span class="pct ${c}">Hit ${pct(h)}</span><div class="muted" style="font-size:10.5px">Deli ${gp==null?'':(gp>=0?'+':'')+Math.round(gp*100)+'%'} vs Plan</div></div></div>`; }).join('');
+  const tile=(k,ico,cls,f)=>{ const L=grp[k]; return `<div class="card" style="padding:12px 14px;box-shadow:none;background:var(--surface-2)"><div class="lab" style="display:flex;justify-content:space-between;align-items:center"><span class="pill ${cls}">${ico} ${k}</span><b style="font-size:22px">${L.length}</b></div>
+    <div style="margin-top:6px;display:grid;gap:4px">${L.slice().sort((a,b)=>f(b)-f(a)).slice(0,6).map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1" title="${esc(r.name)} · ${esc(r.code)}"><b>${esc(r.name)}</b></span><span class="muted" style="white-space:nowrap;flex:none">${sgn(f(r)*(k==='Under Plan'||k==='Low Stock'?-1:1))}</span></div>`).join('')||'<span class="muted" style="font-size:12px">Không có</span>'}</div></div>`; };
   main.innerHTML=`${kp}
-   <div class="grid three mt"><div class="card"><h2><span class="ico">🎯</span>PTD Plan by brand<span class="hint">${uLbl()}</span></h2>${donut(brows.map(b=>({l:b.brand,v:b.cP})),'PTD Plan',null,118)}</div>
-    <div class="card"><h2><span class="ico">🚛</span>PTD Deli by brand<span class="hint">${uLbl()}</span></h2>${donut(brows.map(b=>({l:b.brand,v:b.cD})),'PTD Deli',null,118)}</div>
-    <div class="card"><h2><span class="ico">🎯</span>Plan accuracy by brand<span class="hint">PTD · thanh trên = Plan, dưới = Deli · % = Hit (1 − |Deli − Plan| / Plan), số nhỏ = Gap Deli vs Plan</span></h2>${acc||'<div class="empty">No data</div>'}</div></div>
-   <div class="card mt"><h2><span class="ico">🏷️</span>By brand<span class="hint">${esc(st.wh)} · thứ tự mặc định theo danh sách brand</span></h2>${table('brand',skuCols({k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99}),brows,{groups:grps,title:'By brand'})}${PLEG()}</div>
-   <div class="card mt"><h2><span class="ico">📦</span>By SKU<span class="hint">${esc(st.wh)} · Low Stock = Deli + Stock &lt; Plan · Warning Loss = Order &gt; Plan và Deli + Stock &lt; Order · %Coverage = store đã có Deli / store có plan SKU</span></h2>
-   ${table('sku',skuCols({k:'code',l:'SKU',cls:'nm',f:r=>`<b>${esc(r.code)}</b><span class="t muted" style="font-size:11px" title="${esc(r.name)}">${esc(r.brand)} · ${esc(r.name)}</span>`,sort:r=>SKU_ORDER.indexOf(r.code)},true),rows,{groups:[...grps,{l:'',n:2}],title:'By SKU'})}${PLEG()}
-   <div class="foot">Coverage tính store là đã phủ khi chính store hoặc DC cha đã có Deli SKU đó từ đầu mùa.</div></div>`;
+   <div class="grid tw mt" style="align-items:stretch"><div class="card"><h2><span class="ico">🏷️</span>PTD Plan · Order · Deli by brand<span class="hint">${uLbl()} · W44 → ${W[wkMax()-1].w} · Hit = 1 − |Deli − Plan| / Plan</span></h2>
+      <div class="legend"><span><i style="background:var(--s-plan)"></i>Plan</span><span><i style="background:var(--s-order)"></i>Order</span><span><i style="background:var(--s-deli)"></i>Deli</span></div>${bars||'<div class="empty">No data</div>'}</div>
+    <div class="card"><h2><span class="ico">🚨</span>Cảnh báo nhanh<span class="hint">PTD · ngưỡng ±10% · số bên phải = chênh lệch ${uLbl()}</span></h2>
+      <div class="grid two" style="gap:10px">${tile('Over Plan','⬆️','warn',r=>gapOf(r))}${tile('Under Plan','⬇️','info',r=>-gapOf(r))}${tile('Warning Loss','⚠️','bad',r=>r.cO-r.cD-r.stk)}${tile('Low Stock','📉','bad',r=>r.cP-r.cD-r.stk)}</div></div></div>
+   <div class="card mt"><h2><span class="ico">🏷️</span>By brand<span class="hint">${esc(st.wh)} · thứ tự mặc định theo danh sách brand</span></h2>${table('brand',skuCols({k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99}),brows,{groups:skuGroups(false),title:'By brand'})}${PLEG()}</div>
+   <div class="card mt"><h2><span class="ico">📦</span>By SKU<span class="hint">${esc(st.wh)} · chỉ SKU có Season Plan &gt; 0 · Note chỉ hiện khi lệch quá ±10% · Low Stock = Deli + Stock &lt; 90% Plan · Warning Loss = Over Plan và Deli + Stock &lt; Order</span></h2>
+   ${table('sku',skuCols(SKC(),true),rows,{groups:skuGroups(true),title:'By SKU'})}${PLEG()}
+   <div class="foot">Supply: Current Stock theo kho đang lọc; sản xuất lấy sheet Production (dòng Total, cột Plan) của MP + YP (DN không có nhà máy). Rem. This Week = từ hôm nay ${dmy(TODAY)} đến hết ${TW?TW.w:'tuần'}; Next Week = ${NW?NW.w+' ('+dmy(NW.start)+'–'+dmy(addDay(NW.start,6))+')':'–'}. Total Supply % = (Stock + Rem + Next) / (Plan PTD − Deli PTD). Trạng thái: ≥ 100% Đủ hàng · 80–100% Sát · &lt; 80% Thiếu.${PROD.some(r=>r.d>=TODAY&&r.p>0)?'':' <b>Hiện sheet Production chưa có kế hoạch từ hôm nay trở đi nên SX = 0.</b>'}</div></div>`;
 }
 function deliBy(keyFn){ const m={}; A.forEach(r=>{ if(!(r.db>0)||!brOk(r.sku)||!skuQ(r.sku)) return; const a={acc:r.acc,kam:r.kam}; if(!kamOk(a)||!accOk(a)||!chOk(a)) return; if(sgActive()&&r.sg!==st.sg) return; if(!geoOk(r)) return;
   const k=keyFn(r); if(!k) return; const o=m[k]=m[k]||{b:0,a:0}; o.b+=r.db; o.a+=r.da; }); return m; }
+function storeStats(){ const m={}; A.forEach(r=>{ if(!r.store||!brOk(r.sku)||!skuQ(r.sku)) return; const a={acc:r.acc,kam:r.kam}; if(!kamOk(a)||!accOk(a)||!chOk(a)) return; if(sgActive()&&r.sg!==st.sg) return; if(!geoOk(r)) return;
+  const o=m[r.store]=m[r.store]||{o:0,d:0,c:0,x:0,w:0,po:new Set()}; o.o+=V(r.ob,r.oa); o.d+=V(r.db,r.da); const cv=V(r.cb,r.ca); o.c+=cv; if(r.xc) o.x+=cv; o.w+=V(r.wb,r.wa); if(r.po) o.po.add(r.po); }); return m; }
 const nf1m=v=>v?nf1.format(v/1e6):'–';
+const BIG4=['Thành phố Hồ Chí Minh','Thành phố Hà Nội','Thành phố Hải Phòng','Thành phố Đà Nẵng'];
 function vStore(){ const cov=coverage(); const cnt=n=>nf0.format(n);
-  const dS=deliBy(r=>r.store), dO=deliBy(r=>r.office||'(No office)'), dPv=deliBy(r=>r.prov||'(No province)');
+  const dS=deliBy(r=>r.store), dO=deliBy(r=>r.office||'(No office)'), dPv=deliBy(r=>r.prov||'(No province)'); const SS=storeStats();
   const om={}; cov.forEach(r=>{ const k=r.office||'(No office)'; const o=om[k]=om[k]||{office:k,sg:r.sg||'(No center)',n:0,full:0,zero:0,p:0,d:0,o:0}; o.n++; o.p+=r.nPlan; o.d+=r.nDeli; o.o+=r.nOrd; if(r.cov>=1) o.full++; if(r.nDeli===0) o.zero++; });
-  const orows=Object.values(om).map(o=>({...o,cov:o.p?o.d/o.p:null,db:(dO[o.office]||{}).b||0,da:(dO[o.office]||{}).a||0})).sort((a,b)=>a.sg.localeCompare(b.sg)||a.office.localeCompare(b.office));
+  const sgT={}; Object.values(om).forEach(o=>{ const t=sgT[o.sg]=sgT[o.sg]||{p:0,d:0,n:0}; t.p+=o.p; t.d+=o.d; t.n+=o.n; });
+  const SGO=g=>({'MT North Center':0,'MT South Center':1,'KAM Part':2}[g]??3);
+  const orows0=Object.values(om).map(o=>({...o,cov:o.p?o.d/o.p:null,shP:sgT[o.sg].p?o.p/sgT[o.sg].p:null,shD:sgT[o.sg].d?o.d/sgT[o.sg].d:null,db:(dO[o.office]||{}).b||0,da:(dO[o.office]||{}).a||0})).sort((a,b)=>SGO(a.sg)-SGO(b.sg)||b.p-a.p);
+  const orows=[]; let lsg=null; orows0.forEach(r=>{ if(!st.sort.office&&r.sg!==lsg){ orows.push({_ghdr:r.sg}); lsg=r.sg; } orows.push(r); });
   const pm={}; cov.forEach(r=>{ const k=r.prov||'(No province)'; const o=pm[k]=pm[k]||{prov:k,n:0,full:0,zero:0,p:0,d:0}; o.n++; o.p+=r.nPlan; o.d+=r.nDeli; if(r.cov>=1) o.full++; if(r.nDeli===0) o.zero++; });
-  const prows=Object.values(pm).map(o=>({...o,cov:o.p?o.d/o.p:null,db:(dPv[o.prov]||{}).b||0,da:(dPv[o.prov]||{}).a||0})).sort((a,b)=>b.p-a.p);
-  const sgm={}; cov.forEach(r=>{ const k=r.sg||'(No center)'; const o=sgm[k]=sgm[k]||{p:0,d:0,n:0}; o.p+=r.nPlan; o.d+=r.nDeli; o.n++; });
-  const tot=orows.reduce((s,o)=>({p:s.p+o.p,d:s.d+o.d,n:s.n+o.n}),{p:0,d:0,n:0});
-  const srows=cov.map(r=>({...r,missTxt:r.miss.join(', '),db:(dS[r.code]||{}).b||0,da:(dS[r.code]||{}).a||0})).filter(r=>st.status==='All'||(st.status==='Late Inbound'?r.nDeli<r.nPlan:true)).sort((a,b)=>accIdx(a.acc)-accIdx(b.acc)||a.cov-b.cov||a.name.localeCompare(b.name));
+  const prows=Object.values(pm).map(o=>({...o,avg:o.n?o.p/o.n:null,cov:o.p?o.d/o.p:null,db:(dPv[o.prov]||{}).b||0,da:(dPv[o.prov]||{}).a||0,_cls:BIG4.includes(o.prov)?'big4':''})).sort((a,b)=>b.p-a.p);
+  const tot=Object.values(sgT).reduce((s,o)=>({p:s.p+o.p,d:s.d+o.d,n:s.n+o.n}),{p:0,d:0,n:0});
+  // block 1: Sales Group -> Office hierarchy
+  const b1=[]; ['MT North Center','MT South Center'].filter(g=>sgT[g]).forEach(g=>{ const t=sgT[g]; b1.push({office:g,_cls:'tot',n:t.n,p:t.p,d:t.d,shP:t.p/(tot.p||1),shD:t.d/(tot.d||1),cov:t.p?t.d/t.p:null,_sg:true});
+    orows0.filter(o=>o.sg===g).forEach(o=>b1.push({...o,_cls:''})); });
+  const shBar=v=>v==null?'–':`<span class="prog"><span class="tr" style="width:56px"><i style="width:${Math.min(100,v*100)}%;background:var(--c1)"></i></span>${pct1(v)}</span>`;
+  const blk1=table('sgoff',[{k:'office',l:'Sales Group / Office',cls:'l',f:r=>r._sg?`<b>${esc(r.office)}</b>`:`<span style="padding-left:14px">${esc(r.office)}</span>`},{k:'n',l:'Stores',f:r=>cnt(r.n)},{k:'p',l:'Planned',sep:true,f:r=>cnt(r.p)},{k:'shP',l:'% Planned',f:r=>shBar(r.shP),sort:r=>r.shP},{k:'d',l:'Delivered',sep:true,f:r=>cnt(r.d)},{k:'shD',l:'% Delivered',f:r=>shBar(r.shD),sort:r=>r.shD},{k:'cov',l:'%Coverage',sep:true,f:r=>prog(r.cov),sort:r=>r.cov}],
+    b1.map(r=>({...r,_fixed:true})),{groups:[{l:'',n:2},{l:'Slot plan · tỷ trọng trong SG',n:2,sep:1},{l:'Slot đã giao · tỷ trọng trong SG',n:2,sep:1},{l:'',n:1,sep:1}],title:'Coverage by Sales Group / Office',maxh:420});
+  const b4=BIG4.map(c=>{ const o=pm[c]||{prov:c,n:0,p:0,d:0}; return {...o,prov:c.replace('Thành phố ','TP. ')}; });
+  const sum=l=>l.reduce((s,o)=>({n:s.n+o.n,p:s.p+o.p,d:s.d+o.d}),{n:0,p:0,d:0});
+  const s4=sum(b4), oth=sum(Object.values(pm).filter(o=>!BIG4.includes(o.prov)));
+  const b2rows=[...b4.map(o=>({...o,_cls:'big4'})),{prov:'Tổng 4 thành phố lớn',...s4,_cls:'stot'},{prov:'Các tỉnh thành còn lại',...oth,_cls:''},{prov:'Tổng',n:tot.n,p:tot.p,d:tot.d,_cls:'tot'}].map(o=>({...o,shN:o.n/(tot.n||1),shP:o.p/(tot.p||1),shD:o.d/(tot.d||1),cov:o.p?o.d/o.p:null,_fixed:true}));
+  const seg=(lbl,a,b)=>{ const t=a+b||1; return `<div class="hbar" style="grid-template-columns:120px 1fr 120px"><div class="nm">${lbl}</div><div class="tr" style="height:16px"><i style="width:${a/t*100}%;background:#e9b949"></i><i style="width:${b/t*100}%;background:var(--c1)"></i></div><div class="v"><b>${pct1(a/t)}</b> · ${pct1(b/t)}</div></div>`; };
+  const big4Chart=`<div class="legend mt"><span><i style="background:#e9b949"></i>4 thành phố lớn</span><span><i style="background:var(--c1)"></i>Các tỉnh còn lại</span></div>${seg('Stores',s4.n,oth.n)}${seg('Planned slots',s4.p,oth.p)}${seg('Delivered slots',s4.d,oth.d)}
+    <div class="hbar" style="grid-template-columns:120px 1fr 120px"><div class="nm">%Coverage</div><div style="display:grid;gap:3px"><div class="tr" style="height:7px"><i style="width:${(s4.p?s4.d/s4.p:0)*100}%;background:#e9b949"></i></div><div class="tr" style="height:7px"><i style="width:${(oth.p?oth.d/oth.p:0)*100}%;background:var(--c1)"></i></div></div><div class="v"><b>${pct1(s4.p?s4.d/s4.p:null)}</b> · ${pct1(oth.p?oth.d/oth.p:null)}</div></div>`;
+  const blk2=table('big4',[{k:'prov',l:'Khu vực',cls:'l'},{k:'n',l:'Stores',f:r=>cnt(r.n)},{k:'shN',l:'% Stores',f:r=>pct1(r.shN)},{k:'p',l:'Planned',sep:true,f:r=>cnt(r.p)},{k:'shP',l:'% Planned',f:r=>shBar(r.shP)},{k:'d',l:'Delivered',sep:true,f:r=>cnt(r.d)},{k:'shD',l:'% Delivered',f:r=>shBar(r.shD)},{k:'cov',l:'%Coverage',sep:true,f:r=>prog(r.cov)}],b2rows,{groups:[{l:'',n:3},{l:'Slot plan',n:2,sep:1},{l:'Slot đã giao',n:2,sep:1},{l:'',n:1,sep:1}],title:'Big 4 cities vs others'});
+  const srows=cov.map(r=>{ const x=SS[r.code]||{o:0,d:0,c:0,x:0,w:0,po:new Set()}; return {...r,missTxt:r.miss.join(', '),so:x.o,sd:x.d,sc:x.c,scr:(x.o+x.x)>0?x.c/(x.o+x.x):null,sw:x.w,spo:x.po.size}; })
+    .filter(r=>st.status==='All'||(st.status==='Late Inbound'?r.nDeli<r.nPlan:true)).sort((a,b)=>accIdx(a.acc)-accIdx(b.acc)||a.cov-b.cov||a.name.localeCompare(b.name));
   const totDb=Object.values(dS).reduce((s,o)=>s+o.b,0), totDa=Object.values(dS).reduce((s,o)=>s+o.a,0);
-  const ccls2=v=>v>=0.8?'var(--good-bar)':(v>=0.5?'var(--warn-bar)':'var(--bad-bar)');
-  const top=prows.slice(0,20); const mxp=Math.max(1,...top.map(o=>o.p));
-  const pbars=top.map(o=>`<div class="hbar" title="${esc(o.prov)} · ${cnt(o.n)} stores · ${cnt(o.d)}/${cnt(o.p)} slots · Deli ${nf0.format(o.db)} box"><div class="nm">${esc(o.prov)} <span class="muted">(${cnt(o.n)})</span></div><div class="tr"><i style="width:${(o.cov||0)*100}%;background:${ccls2(o.cov)}"></i></div><div class="v"><b>${pct(o.cov)}</b></div></div>`).join('');
-  main.innerHTML=kpiRow([['🏬','Active stores',cnt(tot.n),'có plan Tết theo account & vùng'],['🧩','Store coverage',pct(tot.d/tot.p),`${cnt(tot.d)} / ${cnt(tot.p)} slot store × SKU đã giao`],
-      ['✅','Fully covered',cnt(cov.filter(r=>r.cov>=1).length),'store đủ mọi SKU plan'],['⛔','Not started',cnt(cov.filter(r=>r.nDeli===0).length),'store chưa có SKU Tết nào',''],
-      ['🚛','Deli đến store',nf0.format(totDb)+' box',`${nf1m(totDa)} M VND (giao trực tiếp, chưa gồm DC)`],['🗺️','Tỉnh/Thành',cnt(prows.length),'có store active']])+`
-   <div class="grid three mt"><div class="card"><h2><span class="ico">🧭</span>Coverage slots delivered by Sales Group</h2>${donut(Object.entries(sgm).map(([k,o])=>({l:`${k} (${pct(o.d/o.p)})`,v:o.d})),'Delivered',v=>nf0.format(v),118)}</div>
-    <div class="card"><h2><span class="ico">🏢</span>Coverage slots delivered by Office</h2>${donut(orows.slice().sort((a,b)=>b.d-a.d).map(o=>({l:`${o.office} (${pct(o.cov)})`,v:o.d})),'Delivered',v=>nf0.format(v),118,10)}</div>
-    <div class="card"><h2><span class="ico">🗺️</span>Coverage slots delivered by Province<span class="hint">top 20 tỉnh nhiều slot plan nhất · thanh = %coverage</span></h2>${pbars||'<div class="empty">No data</div>'}</div></div>
-   <div class="card mt"><h2><span class="ico">🏢</span>By office</h2>${table('office',[{k:'office',l:'Office',cls:'l'},{k:'sg',l:'Sales Group',cls:'l'},{k:'n',l:'Stores',f:r=>cnt(r.n)},{k:'full',l:'Full',f:r=>cnt(r.full)},{k:'zero',l:'Not started',f:r=>cnt(r.zero)},{k:'p',l:'Planned',sep:true,f:r=>cnt(r.p)},{k:'o',l:'Ordered',f:r=>cnt(r.o)},{k:'d',l:'Delivered',f:r=>cnt(r.d)},{k:'cov',l:'%Coverage',f:r=>prog(r.cov),sort:r=>r.cov},{k:'db',l:'Deli Box',sep:true,f:r=>nf0.format(r.db)},{k:'da',l:'Deli M VND',f:r=>nf1m(r.da)}],orows,{groups:[{l:'',n:5},{l:'Slots store × SKU',n:4,sep:1},{l:'Actual (Deli)',n:2,sep:1}],title:'By office',maxh:520})}</div>
-    <div class="card mt"><h2><span class="ico">🗺️</span>By province</h2>${table('prov',[{k:'prov',l:'Province',cls:'l'},{k:'n',l:'Stores',f:r=>cnt(r.n)},{k:'full',l:'Full',f:r=>cnt(r.full)},{k:'zero',l:'Not started',f:r=>cnt(r.zero)},{k:'p',l:'Planned',sep:true,f:r=>cnt(r.p)},{k:'d',l:'Delivered',f:r=>cnt(r.d)},{k:'cov',l:'%Coverage',f:r=>prog(r.cov),sort:r=>r.cov},{k:'db',l:'Deli Box',sep:true,f:r=>nf0.format(r.db)},{k:'da',l:'Deli M VND',f:r=>nf1m(r.da)}],prows,{groups:[{l:'',n:4},{l:'Slots',n:3,sep:1},{l:'Actual (Deli)',n:2,sep:1}],title:'By province',maxh:520})}</div>
-   <div class="card mt"><h2><span class="ico">🏪</span>By store<span class="hint">%Coverage = SKU Tết đã giao ÷ SKU Tết plan của account tại vùng của store (từ đầu mùa) · Deli = giao trực tiếp cho store</span></h2>
+  const nEx=STORES.filter(s=>!s.dc&&s.ex).length;
+  main.innerHTML=kpiRow([['🏬','Active stores',cnt(tot.n),`có plan Tết · đã loại ${cnt(nEx)} store Hyper thuộc MT North/South Center hoặc Office trống`],['🧩','Store coverage',pct(tot.d/tot.p),`${cnt(tot.d)} / ${cnt(tot.p)} slot store × SKU đã giao`],
+      ['✅','Fully covered',cnt(cov.filter(r=>r.cov>=1).length),'store đủ mọi SKU plan'],['⛔','Not started',cnt(cov.filter(r=>r.nDeli===0).length),'store chưa có SKU Tết nào'],
+      ['🚛','Deli đến store',nf0.format(totDb)+' box',`${nf1m(totDa)} M VND (giao trực tiếp, chưa gồm DC)`],['🏙️','4 thành phố lớn',pct(s4.p?s4.d/s4.p:null),`coverage · ${pct1(s4.p/(tot.p||1))} slot plan toàn quốc`]])+`
+   <div class="grid two mt" style="align-items:stretch"><div class="card" style="display:flex;flex-direction:column"><h2><span class="ico">🧭</span>Coverage by Sales Group → Office<span class="hint">tỷ trọng các Office trong mỗi Sales Group = 100%</span></h2>${blk1}${Object.keys(sgT).some(g=>!['MT North Center','MT South Center'].includes(g))?`<div class="foot">Ngoài 2 Sales Group trên còn ${Object.keys(sgT).filter(g=>!['MT North Center','MT South Center'].includes(g)).map(g=>esc(g)+' ('+nf0.format(sgT[g].n)+' store)').join(', ')} – xem bảng By office.</div>`:''}</div>
+    <div class="card" style="display:flex;flex-direction:column"><h2><span class="ico">🏙️</span>4 thành phố lớn vs các tỉnh còn lại<span class="hint">tỷ trọng trên tổng toàn quốc</span></h2>${blk2}
+      ${big4Chart}<div class="foot">4 thành phố: Hồ Chí Minh · Hà Nội · Hải Phòng · Đà Nẵng (theo cột Province của Storelist).</div></div></div>
+   <div class="card mt"><h2><span class="ico">🏢</span>By office<span class="hint">nhóm theo Sales Group</span></h2>${table('office',[{k:'sg',l:'Sales Group',cls:'l'},{k:'office',l:'Office',cls:'l'},{k:'n',l:'Stores',f:r=>cnt(r.n)},{k:'full',l:'Full',f:r=>cnt(r.full)},{k:'zero',l:'Not started',f:r=>cnt(r.zero)},{k:'p',l:'Planned',sep:true,f:r=>cnt(r.p)},{k:'o',l:'Ordered',f:r=>cnt(r.o)},{k:'d',l:'Delivered',f:r=>cnt(r.d)},{k:'cov',l:'%Coverage',f:r=>prog(r.cov),sort:r=>r.cov},{k:'db',l:'Deli Box',sep:true,f:r=>nf0.format(r.db)},{k:'da',l:'Deli M VND',f:r=>nf1m(r.da)}],orows,{groups:[{l:'',n:5},{l:'Slots store × SKU',n:4,sep:1},{l:'Actual (Deli)',n:2,sep:1}],title:'By office',maxh:520})}</div>
+   <div class="card mt"><h2><span class="ico">🗺️</span>By province<span class="hint">nền vàng = 4 thành phố lớn · Avg. SKU = Planned Slots / Stores</span></h2>${table('prov',[{k:'prov',l:'Province',cls:'l'},{k:'full',l:'Full',f:r=>cnt(r.full)},{k:'zero',l:'Not started',f:r=>cnt(r.zero)},{k:'n',l:'Stores',sep:true,f:r=>cnt(r.n)},{k:'avg',l:'Avg. SKU',f:r=>r.avg==null?'–':nf1.format(r.avg)},{k:'p',l:'Planned Slots',f:r=>cnt(r.p)},{k:'d',l:'Delivered Slots',f:r=>cnt(r.d)},{k:'cov',l:'%Coverage',f:r=>prog(r.cov),sort:r=>r.cov},{k:'db',l:'Deli Box',sep:true,f:r=>nf0.format(r.db)},{k:'da',l:'Deli M VND',f:r=>nf1m(r.da)}],prows,{groups:[{l:'',n:1},{l:'Trạng thái store',n:2,sep:1},{l:'Stores × Avg. SKU = Planned Slots → Delivered → %Coverage',n:5,sep:1},{l:'Actual (Deli)',n:2,sep:1}],title:'By province',maxh:520})}</div>
+   <div class="card mt"><h2><span class="ico">🏪</span>By store<span class="hint">đã loại store Hyper thuộc MT North/South Center hoặc Office trống · cụm Actual tính từ đầu mùa, ${uLbl()}</span></h2>
    ${table('store',[{k:'code',l:'Store',cls:'nm',f:r=>`<b class="t" title="${esc(r.name)}">${esc(r.name)}</b><span class="t muted" style="font-size:11px">${esc(r.code)} · ${esc(r.prov)}</span>`,sort:r=>r.name},{k:'acc',l:'Account',cls:'l',sort:r=>accIdx(r.acc)},
-     {k:'missTxt',l:'Missing SKUs',cls:'ms',f:r=>r.miss.length?`<span class="c" title="${esc(r.missTxt)}">${r.miss.length} · ${esc(r.missTxt)}</span>`:'<span class="tick y">✓ đủ</span>',sort:r=>r.miss.length},
+     {k:'missTxt',l:'Missing SKUs',cls:'ms',f:r=>r.miss.length?`<span class="c" title="${esc(r.miss.map(c=>(SKU[c]||{}).name||c).join(', '))}">${r.miss.length} · ${esc(r.miss.map(c=>(SKU[c]||{}).name||c).join(', '))}</span>`:'<span class="tick y">✓ đủ</span>',sort:r=>r.miss.length},
      {k:'office',l:'Office',cls:'l'},{k:'parent',l:'DC',cls:'l',f:r=>r.parent?`<span class="pill info">${esc(r.parent)}</span>`:'<span class="muted">direct</span>'},{k:'nPlan',l:'Plan',sep:true},{k:'nOrd',l:'Ordered'},{k:'nDeli',l:'Deli',f:r=>r.nDeli+(r.viaDC?` <span class="muted">(${r.viaDC} DC)</span>`:'')},{k:'cov',l:'%Coverage',f:r=>prog(r.cov),sort:r=>r.cov},
-     {k:'db',l:'Deli Box',sep:true,f:r=>r.db?nf0.format(r.db):'–'},{k:'da',l:'Deli M VND',f:r=>nf1m(r.da)}],srows,{groups:[{l:'',n:5},{l:'SKU count',n:4,sep:1},{l:'Actual (Deli)',n:2,sep:1}],title:'By store',maxh:720})}
-   <div class="foot">* Store nhận hàng qua DC (Is DC / Parent DC trong Storelist) được tính là đã phủ SKU khi DC cha đã có Deli SKU đó; DC không tính là store. Deli Box/Amount của Office/Province gồm cả hàng giao cho DC thuộc office/tỉnh đó.</div></div>`;
+     cN('so','Order',true),cN('sd','Deli'),cN('sc','Cancel',true),{k:'scr',l:'%Cancel',f:r=>`<span class="pct ${r.scr>=0.1?'lo':(r.scr>=0.03?'hi':'')}">${pct1(r.scr)}</span>`,sort:r=>r.scr},cN('sw','Waiting',true),{k:'spo',l:'PO Count',sep:true,f:r=>r.spo?nf0.format(r.spo):'–'}],
+     srows,{groups:[{l:'',n:5},{l:'SKU count',n:4,sep:1},{l:'Actual từ đầu mùa',n:2,sep:1},{l:'Cancel',n:2,sep:1},{l:'Waiting',n:1,sep:1},{l:'PO',n:1,sep:1}],title:'By store',maxh:720})}
+   <div class="foot">* Store nhận hàng qua DC (Is DC / Parent DC trong Storelist) được tính là đã phủ SKU khi DC cha đã có Deli SKU đó; DC không tính là store. Order/Deli/Cancel/Waiting/PO của store là phần đặt/giao trực tiếp cho chính store. PO Count = số Customer Original PO khác nhau (Rawdata cột K).</div></div>`;
 }
 function vAcc(){ const m=agg(r=>r.acc,r=>r.acc); const cov=coverage(); const ca={}; cov.forEach(r=>{ const o=ca[r.acc]=ca[r.acc]||[0,0]; o[0]+=r.nPlan; o[1]+=r.nDeli; });
   // SKU sets for note: plan SKUs (season) vs ordered SKUs (season)
@@ -546,8 +618,11 @@ function vAcc(){ const m=agg(r=>r.acc,r=>r.acc); const cov=coverage(); const ca=
       note:pl.length?`Plan ${pl.length} SKU · ordered ${pl.length-miss.length} · missing ${miss.length}${miss.length?': '+miss.join(', '):''}`:''}; });
   rows=rows.filter(r=>st.status==='All'||(st.status==='Over Plan'&&r.gap>0)||(st.status==='Late Inbound'&&r.miss.length));
   rows.sort((a,b)=>accIdx(a.acc)-accIdx(b.acc));
-  const out=[]; let last=null; rows.forEach(r=>{ if(!st.sort.acc&&r.ch!==last){ out.push({_ghdr:r.ch||'Other'}); last=r.ch; } out.push(r); });
-  const tot=rows.reduce((s,r)=>{ ['wP','wO','wD','cP','cO','cD','sP','pcP','aD','aO'].forEach(k=>s[k]=(s[k]||0)+r[k]); return s; },{acc:'G.Total',_cls:'tot',_fixed:true,_top:true}); tot.gap=tot.cO-tot.cP;
+  const AK=['wP','wO','wD','wC','wWt','cP','cO','cD','cC','cX','cWt','sP','pcP','aD','aO'];
+  const sumRows=(list,base)=>{ const t=list.reduce((s,r)=>{ AK.forEach(k=>s[k]=(s[k]||0)+(r[k]||0)); return s; },base); t.gap=t.cO-t.cP; return t; };
+  const out=[]; if(st.sort.acc) out.push(...rows); else { const chs=[...new Set(rows.map(r=>r.ch||'Other'))];
+    chs.forEach(ch=>{ const L=rows.filter(r=>(r.ch||'Other')===ch); out.push({_ghdr:ch}); out.push(...L); out.push(sumRows(L,{acc:`Sub-total ${ch}`,ch,kam:`${L.length} account`,_cls:'stot',_fixed:true})); }); }
+  const tot=sumRows(rows,{acc:'G.Total',_cls:'tot',_fixed:true,_top:true});
   const chm={}; rows.forEach(r=>{ const o=chm[r.ch||'Other']=chm[r.ch||'Other']||{d:0,p:0}; o.d+=r.aD; o.p+=r.sP; });
   const chItems=[...CHANNELS,'Other'].filter(c=>chm[c]).map(c=>({l:`${c} · ${pct1(chm[c].p?chm[c].d/chm[c].p:null)} plan`,v:chm[c].d}));
   const accItems=rows.slice().sort((a,b)=>b.aD-a.aD).map(r=>({l:r.acc,v:r.aD}));
@@ -558,11 +633,12 @@ function vAcc(){ const m=agg(r=>r.acc,r=>r.acc); const cov=coverage(); const ca=
   <div class="grid two mt"><div class="card"><h2><span class="ico">🛒</span>Contribution by Channel<span class="hint">Deli lũy kế · ${uLbl()} · % sau tên = Deli / Plan cả kỳ</span></h2>${donut(chItems,'Deli',null,140)}</div>
    <div class="card"><h2><span class="ico">🤝</span>Contribution by Account<span class="hint">Deli lũy kế · top 9 + Other</span></h2>${donut(accItems,'Deli',null,140,10)}</div></div>
   <div class="card mt"><h2><span class="ico">🤝</span>By account<span class="hint">${esc(st.wh)} · ${uLbl()} · nhóm theo channel (bấm tiêu đề cột để sắp xếp)</span></h2>
-  ${table('acc',[{k:'acc',l:'Account',cls:'l',sort:r=>accIdx(r.acc)},{k:'ch',l:'Channel',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('wP','Plan',true),cN('wO','Order'),cN('wD','Deli'),cP('wpd','%Deli',r=>r.wD/r.wO),
-    cN('cP','Plan',true),cN('cO','Order'),{k:'gap',l:'Gap (O−P)',f:r=>`<span class="${r.gap<0?'pct lo':(r.gap>0?'pct hi':'')}">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.cO/r.cP),cN('cD','Deli'),cP('pd','%Deli',r=>r.cD/r.cO),cP('ht','%Hit',r=>hit(r.cP,r.cD)),
+  ${table('acc',[{k:'acc',l:'Account',cls:'l',sort:r=>accIdx(r.acc),f:r=>r._cls?`<b>${esc(r.acc)}</b>`:esc(r.acc)},{k:'ch',l:'Channel',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('wP','Plan',true),cN('wO','Order'),cN('wD','Deli'),cP('wpd','%Deli',r=>r.wD/r.wO),cN('wC','Cancel'),cN('wWt','Waiting'),
+    cN('cP','Plan',true),cN('cO','Order'),{k:'gap',l:'Gap (O−P)',f:r=>`<span class="${r.gap<0?'pct lo':(r.gap>0?'pct hi':'')}">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.cO/r.cP),cN('cD','Deli',true),cP('pd','%Deli',r=>r.cD/r.cO),cP('ht','%Hit',r=>hit(r.cP,r.cD)),
+    cN('cC','Cancel',true),{k:'pc',l:'%Cancel',f:r=>{ const v=cRate(r); return `<span class="pct ${v>=0.1?'lo':(v>=0.03?'hi':'')}">${pct1(v)}</span>`; },sort:r=>cRate(r)},cN('cWt','Waiting',true),
     cN('sP','Plan cả kỳ',true),cN('aD','Deli lũy kế'),PB_COL(),
-    {k:'cov',l:'%Coverage',sep:true,f:r=>prog(r.cov),sort:r=>r.cov==null?-1:r.cov},{k:'note',l:'Note (SKU ordered vs planned)',cls:'nt',f:r=>r.note?`<span class="c" title="${esc(r.note)}">${esc(r.note)}</span>`:''}],[tot,...out],{groups:[{l:'',n:3},{l:`Weeks: ${weekLbl()}`,n:4,sep:1},{l:'PTD',n:7,sep:1},{l:'Tiến độ mùa Tết',n:3,sep:1},{l:'',n:2,sep:1}],title:'Accounts'})}
-  ${PLEG()}<div class="foot">Note compares Tết SKUs planned for the account (season) with SKUs that already have an Order. %Coverage is store-level (see Store Checking).</div></div>`;
+    {k:'cov',l:'%Coverage',sep:true,f:r=>prog(r.cov),sort:r=>r.cov==null?-1:r.cov},{k:'note',l:'Note (SKU ordered vs planned)',cls:'nt',f:r=>r.note?`<span class="c" title="${esc(r.note)}">${esc(r.note)}</span>`:''}],[tot,...out],{groups:[{l:'',n:3},{l:`Weeks: ${weekLbl()}`,n:6,sep:1},{l:'PTD · Plan → %Order',n:4,sep:1},{l:'PTD · Deli → %Hit',n:3,sep:1},{l:'Cancel',n:2,sep:1},{l:'Waiting',n:1,sep:1},{l:'Tiến độ mùa Tết',n:3,sep:1},{l:'',n:2,sep:1}],title:'Accounts'})}
+  ${PLEG()}<div class="foot">Note compares Tết SKUs planned for the account (season) with SKUs that already have an Order. %Coverage is store-level (see Store Tracking). Sub-total = tổng theo channel; thanh tiến độ của Sub-total là % hoàn thành của cả channel. Waiting = Waiting + Remain.</div></div>`;
 }
 function vYag(){ const area = st.sg==='MT North Center'?'North':(st.sg==='MT South Center'?'South':(['YP','DN North'].includes(st.wh)?'North':(['MP','DN South'].includes(st.wh)?'South':null)));
   const mx=wkMax(); const m={}; const g=c=>m[c]=m[c]||{sP:0,cP:0,cD:0,ys:0,yc:0};
@@ -584,7 +660,7 @@ function vYag(){ const area = st.sg==='MT North Center'?'North':(st.sg==='MT Sou
     p:pa.filter(r=>r.wi===w.i).reduce((s,r)=>s+V(r.box,r.amt),0), d:w.i>mx?0:A.filter(r=>aBase(r)&&r.area!==''&&(!area||r.area===area)&&r.wi===w.i).reduce((s,r)=>s+V(r.db,r.da),0)}));
   main.innerHTML=`<div class="card"><h2>Tết 2027 vs Tết 2026 by Tết week<span class="hint">${area||'MT Total'} · Y26 = IMK sell-in · ${uLbl()}</span></h2>${barChart(yw,[{k:'p',c:'var(--s-plan)',name:'Plan Y27'},{k:'d',c:'var(--s-deli)',name:'Deli Y27'},{k:'y',c:'var(--s-y26)',name:'Y26',line:true}],{w:1400,h:250,sub:true})}</div>
   <div class="card mt"><h2>By SKU<span class="hint">PTD = same Tết weeks W14 → ${W[mx-1].tet} · Y26 SKUs are like-for-like codes</span></h2>
-  ${table('yag',[{k:'code',l:'SKU',cls:'l',f:r=>r._cls?'<b>G.Total</b>':`<b>${esc(r.code)}</b><div class="muted" style="font-size:11px">${esc(r.brand)} · ${esc(r.name)}</div>`,sort:r=>SKU_ORDER.indexOf(r.code)},{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},
+  ${table('yag',[{k:'code',l:'Item name / code',cls:'sk',f:r=>r._cls?'<b>G.Total</b>':skuCell(r.code,r.name),sort:r=>SKU_ORDER.indexOf(r.code)},{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},
     cN('sP','Plan Y27 season',true),cN('ys','Y26 season'),cP('pg','Plan vs Y26',r=>r.sP/r.ys),cN('cP','Plan Y27 PTD'),cN('yc','Y26 PTD'),cP('pgc','Plan PTD vs Y26',r=>r.cP/r.yc),
     cN('cD','Deli Y27 PTD',true),cN('yc2','Y26 PTD'),cP('dg','Deli vs Y26',r=>r.cD/r.yc),cP('dp','Deli vs Plan',r=>r.cD/r.cP)].map(c=>c.k==='yc2'?{...c,f:r=>fmt(r.yc),sort:r=>r.yc}:c),[tot,...rows],{groups:[{l:'',n:2},{l:'Plan comparison',n:6,sep:1},{l:'Deli comparison',n:4,sep:1}],title:'YAG by SKU'})}</div>
   <div class="card mt"><h2><span class="ico">🤝</span>By account<span class="hint">tăng trưởng = Y27 / Y26 − 1 · PTD = cùng tuần Tết W14 → ${W[mx-1].tet} · nhóm theo channel</span></h2>
@@ -593,55 +669,66 @@ function vYag(){ const area = st.sg==='MT North Center'?'North':(st.sg==='MT Sou
 }
 // ---- inbound (b) ----
 let INB_CACHE=null;
+const STORE_AR={}; STORES.forEach(s=>{ if(s.dc||s.ex) return; const g=s.sg==='MT North Center'?'N':(s.sg==='MT South Center'?'S':''); if(!g) return; (STORE_AR[s.acc+'|'+g]=STORE_AR[s.acc+'|'+g]||[]).push(s); });
 function inboundCalc(){ if(INB_CACHE) return INB_CACHE;
   const reg=r=> r.acc==='ECOM'?(r.wh==='YP'?'N':(r.wh==='MP'?'S':'')):(r.sg==='MT North Center'?'N':(r.sg==='MT South Center'?'S':''));
   const ox={}, dx={}; A.forEach(r=>{ const g=reg(r); if(!g) return; const k=r.acc+'|'+r.sku+'|'+g; if(r.ob>0&&r.date&&r.date<=DATA_DATE) (ox[k]=ox[k]||[]).push([r.date,r.store]); if(r.db>0&&r.bill&&r.bill<=DATA_DATE) (dx[k]=dx[k]||[]).push([r.bill,r.store]); });
   const pq={}; P.forEach(r=>{ if(!r.wi) return; const g=r.area==='North'?'N':(r.area==='South'?'S':''); if(!g) return; const k=r.acc+'|'+r.sku+'|'+g+'|'+r.wi; pq[k]=(pq[k]||0)+r.box; });
-  const out=INB.map(r=>{ const g=r.center==='MT North'?'N':'S', k=r.acc+'|'+r.sku+'|'+g; const ol=ox[k]||[], dl=dx[k]||[]; let prev=null; const cells=[];
-    r.dates.forEach((d,i)=>{ if(!d){ cells.push(0); return; } const start=prev?addDay(prev,1):'2026-10-01'; const del=dl.some(x=>x[0]>=start), ord=ol.some(x=>x[0]>=start); const appl=(pq[k+'|'+(i+1)]||0)>0;
+  const out=INB.map(r=>{ const g=r.center==='MT North'?'N':'S', k=r.acc+'|'+r.sku+'|'+g; const ol=ox[k]||[], dl=dx[k]||[]; let prev=null; const cells=[], starts=[];
+    r.dates.forEach((d,i)=>{ if(!d){ cells.push(0); starts.push(''); return; } const start=prev?addDay(prev,1):'2026-10-01'; starts.push(start); const del=dl.some(x=>x[0]>=start), ord=ol.some(x=>x[0]>=start); const appl=(pq[k+'|'+(i+1)]||0)>0;
       let c; if(del) c=1; else if(!appl) c=4; else if(d<=DATA_DATE) c=ord?5:2; else c=3; cells.push(c); prev=d; });
-    const due=cells.filter((c,i)=>r.dates[i]&&r.dates[i]<=DATA_DATE&&c!==4).length, done=cells.filter((c,i)=>c===1&&r.dates[i]<=DATA_DATE).length;
+    const dueIdx=cells.map((c,i)=>(r.dates[i]&&r.dates[i]<=DATA_DATE&&c!==4&&c!==0)?i:-1).filter(i=>i>=0);
+    const due=dueIdx.length, done=dueIdx.filter(i=>cells[i]===1).length;
     const lateIdx=cells.map((c,i)=>(c===2||c===5)?i:-1).filter(i=>i>=0);
-    return {...r,g,cells,due,done,late:lateIdx.length,noOrd:cells.filter(c=>c===2).length,ordNo:cells.filter(c=>c===5).length,firstLate:lateIdx.length?r.dates[lateIdx[0]]:'',
-      nOrd:new Set(ol.map(x=>x[1])).size,nDel:new Set(dl.map(x=>x[1])).size}; });
+    // store counts in the SAME window as the status (window of the latest due cell); a store counts if itself or its parent DC ordered / was billed
+    const wi=dueIdx.length?dueIdx[dueIdx.length-1]:-1, ws=wi>=0?starts[wi]:null;
+    const oS=new Set(ws?ol.filter(x=>x[0]>=ws).map(x=>x[1]):[]), dS=new Set(ws?dl.filter(x=>x[0]>=ws).map(x=>x[1]):[]);
+    const list=STORE_AR[r.acc+'|'+g]||[]; const nTot=list.length;
+    const nOrd=list.filter(s=>oS.has(s.code)||(s.parent&&oS.has(s.parent))).length, nDel=list.filter(s=>dS.has(s.code)||(s.parent&&dS.has(s.parent))).length;
+    return {...r,g,cells,due,done,late:lateIdx.length,noOrd:cells.filter(c=>c===2).length,ordNo:cells.filter(c=>c===5).length,firstLate:lateIdx.length?r.dates[lateIdx[0]]:'',winStart:ws,nTot,nOrd,nDel}; });
   INB_CACHE=out; return out; }
 function addDay(s,n){ const d=new Date(s+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function inboundRows(){ // merge N/S per plan account x SKU
   const sgN=st.sg==='MT North Center', sgS=st.sg==='MT South Center';
   const rows=inboundCalc().filter(r=>kamOk(r)&&accOk(r)&&chOk(r)&&brOk(r.sku)&&skuQ(r.sku)&&(!sgActive()||(sgN&&r.g==='N')||(sgS&&r.g==='S')));
-  const m={}; rows.forEach(r=>{ const k=r.account+'|'+r.sku; const o=m[k]=m[k]||{account:r.account,acc:r.acc,kam:r.kam,ch:chOf(r.acc),sku:r.sku,name:r.name,brand:brandOf(r.sku),due:0,done:0,late:0,noOrd:0,ordNo:0,nOrdN:0,nOrdS:0,nDelN:0,nDelS:0,lateN:0,lateS:0,firstLate:''};
-    o.due+=r.due;o.done+=r.done;o.late+=r.late;o.noOrd+=r.noOrd;o.ordNo+=r.ordNo; if(r.g==='N'){o.nOrdN=r.nOrd;o.nDelN=r.nDel;o.lateN+=r.late;} else {o.nOrdS=r.nOrd;o.nDelS=r.nDel;o.lateS+=r.late;}
+  const m={}; rows.forEach(r=>{ const k=r.account+'|'+r.sku; const o=m[k]=m[k]||{account:r.account,acc:r.acc,kam:r.kam,ch:chOf(r.acc),sku:r.sku,name:(SKU[r.sku]||{}).name||r.name,brand:brandOf(r.sku),due:0,done:0,late:0,noOrd:0,ordNo:0,firstLate:'',reg:{}};
+    o.due+=r.due;o.done+=r.done;o.late+=r.late;o.noOrd+=r.noOrd;o.ordNo+=r.ordNo; o.reg[r.g]={tot:r.nTot,ord:r.nOrd,del:r.nDel,late:r.late,due:r.due};
     if(r.firstLate&&(!o.firstLate||r.firstLate<o.firstLate)) o.firstLate=r.firstLate; });
-  return Object.values(m).map(o=>({...o,days:o.firstLate?Math.round((Date.parse(DATA_DATE)-Date.parse(o.firstLate))/864e5):0,pr:o.due?o.done/o.due:null,
-    note:[o.lateN?`North chưa có hàng (${o.lateN})`:'',o.lateS?`South chưa có hàng (${o.lateS})`:''].filter(Boolean).join(' · ')})); }
+  return Object.values(m).map(o=>{ const R=['N','S'].filter(g=>o.reg[g]); const tot=R.reduce((s,g)=>s+o.reg[g].tot,0), ord=R.reduce((s,g)=>s+o.reg[g].ord,0), del=R.reduce((s,g)=>s+o.reg[g].del,0);
+    return {...o,days:o.firstLate?Math.round((Date.parse(DATA_DATE)-Date.parse(o.firstLate))/864e5):0,pr:o.due?o.done/o.due:null,nTot:tot,nOrd:ord,nDel:del,pO:tot?ord/tot:null,pD:tot?del/tot:null,
+      note:R.map(g=>`${g==='N'?'North':'South'} (${o.reg[g].del}/${o.reg[g].tot})`).join(' · ')}; }); }
 function lateBySku(){ const m={}; inboundRows().forEach(r=>{ if(r.late) m[r.sku]=(m[r.sku]||0)+1; }); return m; }
 function vInb(){ const all=inboundRows(); const late=all.filter(r=>r.late>0); const due=all.reduce((s,r)=>s+r.due,0), done=all.reduce((s,r)=>s+r.done,0);
-  const am2={}; late.forEach(r=>{ const o=am2[r.account]=am2[r.account]||{a:r.account,acc:r.acc,ch:r.ch,no:[],wo:[]}; if(r.noOrd) o.no.push(r.sku); if(r.ordNo) o.wo.push(r.sku); });
-  const accL=Object.values(am2).sort((a,b)=>accIdx(a.acc)-accIdx(b.acc));
-  const noA=accL.filter(o=>o.no.length), woA=accL.filter(o=>o.wo.length);
-  const chipL=(list,k,col)=>list.length?`<div class="chips2">${list.map(o=>`<span class="ach" title="${esc(o[k].join(', '))}" style="border-color:${col}">${esc(o.a)} <b>${o[k].length}</b></span>`).join('')}</div>`:'<div class="empty" style="padding:12px">Không có 🎉</div>';
-  const chm={}; late.forEach(r=>{ const o=chm[r.ch||'Other']=chm[r.ch||'Other']||{ch:r.ch||'Other',n:0,no:0,wo:0,accs:new Set()}; o.n++; if(r.noOrd) o.no++; if(r.ordNo) o.wo++; o.accs.add(r.account); });
-  const chr=[...CHANNELS,'Other'].filter(c=>chm[c]).map(c=>({...chm[c],na:chm[c].accs.size}));
-  const mxc=Math.max(1,...chr.map(o=>o.n));
-  const chBars=chr.map(o=>`<div class="hbar"><div class="nm"><b>${esc(o.ch)}</b> <span class="muted">${o.na} acc</span></div><div class="tr"><i style="width:${o.no/mxc*100}%;background:var(--bad-bar)"></i><i style="width:${Math.max(0,o.n-o.no)/mxc*100}%;background:var(--warn-bar)"></i></div><div class="v"><b>${o.n}</b></div></div>`).join('');
-  const tick=(n,ok)=>n>0?`<span class="tick ${ok?'y':'p'}">✓</span> ${n}`:'<span class="tick n">✗</span>';
-  let rows=(st.status==='All'||st.status==='Late Inbound')?late:late; rows=rows.sort((a,b)=>accIdx(a.acc)-accIdx(b.acc)||b.days-a.days);
+  const nNo=all.reduce((s,r)=>s+r.noOrd,0), nWo=all.reduce((s,r)=>s+r.ordNo,0);
+  const accAgg=key=>{ const m={}; all.forEach(r=>{ const k=key(r); const o=m[k]=m[k]||{k,acc:r.acc,ch:r.ch,accs:new Set(),due:0,done:0,no:0,wo:0,late:0}; o.due+=r.due; o.done+=r.done; o.no+=r.noOrd; o.wo+=r.ordNo; if(r.late) o.late++; o.accs.add(r.account); }); return m; };
+  const am=accAgg(r=>r.account);
+  const accList=[...new Set(INB.filter(r=>kamOk(r)&&accOk(r)&&chOk(r)).map(r=>r.account))].sort((a,b)=>{ const x=INB.find(r=>r.account===a), y=INB.find(r=>r.account===b); return accIdx(x.acc)-accIdx(y.acc)||a.localeCompare(b); });
+  const arows=accList.map(a=>{ const o=am[a]||{k:a,acc:(INB.find(r=>r.account===a)||{}).acc,due:0,done:0,no:0,wo:0,late:0}; return {...o,a,ch:chOf(o.acc)}; });
+  const pc=(n,d)=>d?n/d:null; const pcl=(v,bad)=>`<span class="pct ${v==null?'':(bad?(v>0.3?'lo':(v>0?'hi':'ok')):(v>=0.8?'ok':(v>=0.5?'hi':'lo')))}">${pct(v)}</span>`;
+  const accCols=(first)=>[first,{k:'due',l:'Lines due'},{k:'no',l:'No Order',sep:true},{k:'pno',l:'% No Order',f:r=>pcl(pc(r.no,r.due),true),sort:r=>pc(r.no,r.due)},{k:'wo',l:'Ordered',sep:true},{k:'pwo',l:'% Ordered',f:r=>pcl(pc(r.wo,r.due),true),sort:r=>pc(r.wo,r.due)},{k:'done',l:'Delivered',sep:true},{k:'pdl',l:'% Delivered',f:r=>pcl(pc(r.done,r.due)),sort:r=>pc(r.done,r.due)}];
+  const cm=accAgg(r=>r.ch||'Other'); const chr=[...CHANNELS,'Other'].filter(c=>cm[c]).map(c=>({...cm[c],ch:c,na:cm[c].accs.size}));
+  const ctot=chr.reduce((s,o)=>({ch:'Tổng',na:s.na+o.na,due:s.due+o.due,done:s.done+o.done,no:s.no+o.no,wo:s.wo+o.wo,_cls:'tot',_fixed:true,_top:true}),{na:0,due:0,done:0,no:0,wo:0});
+  const mxc=Math.max(1,...chr.map(o=>o.due));
+  const chBars=chr.map(o=>`<div class="hbar"><div class="nm"><b>${esc(o.ch)}</b> <span class="muted">${o.na} acc</span></div><div class="tr"><i style="width:${o.done/mxc*100}%;background:var(--good-bar)"></i><i style="width:${o.wo/mxc*100}%;background:var(--warn-bar)"></i><i style="width:${o.no/mxc*100}%;background:var(--bad-bar)"></i></div><div class="v"><b>${o.due}</b></div></div>`).join('');
+  let rows=late.sort((a,b)=>accIdx(a.acc)-accIdx(b.acc)||b.days-a.days);
   const out=[]; let lc=null; rows.forEach(r=>{ if(!st.sort.inb&&r.ch!==lc){ out.push({_ghdr:r.ch}); lc=r.ch; } out.push(r); });
-  main.innerHTML=kpiRow([['📋','Lines due',nf0.format(due),`planned date ≤ ${dmy(DATA_DATE)} (plan &gt; 0)`],['✅','Delivered on schedule',pct(done/due),`${nf0.format(done)} of ${nf0.format(due)} due lines`],
-     ['🛑','Late · no order yet',nf0.format(late.filter(r=>r.noOrd).length),'account × SKU','var(--bad)'],['⏳','Late · ordered, not delivered',nf0.format(late.filter(r=>!r.noOrd).length),'order placed, no billing yet','var(--warn)']])+`
-   <div class="grid two mt"><div class="grid" style="align-content:start">
-     <div class="card"><h2><span class="ico">🛑</span>Có Plan nhưng chưa có Order<span class="hint">đã đến ngày dự kiến · số = SKU · rê chuột để xem mã</span></h2><div class="stat-big" style="color:var(--bad)">${noA.length} <span style="font-size:14px;font-weight:500;color:var(--text-2)">account</span></div>${chipL(noA,'no','var(--bad-bar)')}</div>
-     <div class="card"><h2><span class="ico">⏳</span>Đã có Order, đang đợi giao<span class="hint">order đã đặt, chưa có billing · số = SKU</span></h2><div class="stat-big" style="color:var(--warn)">${woA.length} <span style="font-size:14px;font-weight:500;color:var(--text-2)">account</span></div>${chipL(woA,'wo','var(--warn-bar)')}</div></div>
-   <div class="grid" style="align-content:start"><div class="card"><h2><span class="ico">🤝</span>Late by account</h2>${table('inbacc',[{k:'a',l:'Account',cls:'l'},{k:'ch',l:'Channel',cls:'l'},{k:'n',l:'SKUs late'},{k:'no',l:'No order'},{k:'or',l:'Ordered'}],
-     Object.values(late.reduce((m,r)=>{ const o=m[r.account]=m[r.account]||{a:r.account,acc:r.acc,ch:r.ch,n:0,no:0,or:0}; o.n++; if(r.noOrd) o.no++; else o.or++; return m; },{})).sort((a,b)=>accIdx(a.acc)-accIdx(b.acc)),{title:'Late by account'})}</div>
-     <div class="card"><h2><span class="ico">🛒</span>Late by channel<span class="hint">số dòng account × SKU trễ</span></h2><div class="legend"><span><i style="background:var(--bad-bar)"></i>Chưa có order</span><span><i style="background:var(--warn-bar)"></i>Đã order, chưa giao</span></div>${chBars||'<div class="empty">Không có dòng trễ 🎉</div>'}
-     ${table('inbch',[{k:'ch',l:'Channel',cls:'l'},{k:'na',l:'Accounts'},{k:'n',l:'Lines late'},{k:'no',l:'No order'},{k:'wo',l:'Ordered'}],chr,{title:'Late by channel'})}</div></div></div>
-   <div class="card mt"><h2><span class="ico">📋</span>Planned but not delivered<span class="hint">Order = any order since the previous planned date · Deli = billing since the previous planned date · store counts = season to date</span></h2>
-   ${table('inb',[{k:'account',l:'Account',cls:'l',sort:r=>accIdx(r.acc)},{k:'kam',l:'KAM',cls:'l'},{k:'sku',l:'SKU',cls:'l',f:r=>`<b>${esc(r.sku)}</b><div class="muted" style="font-size:11px">${esc(r.brand)} · ${esc(r.name)}</div>`},
+  main.innerHTML=kpiRow([['✅','Delivered on schedule',pct(done/due),`${nf0.format(done)} of ${nf0.format(due)} due lines`],
+     ['🛑','Late · no order yet',nf0.format(nNo),'lịch nhập đến hạn, chưa có order','var(--bad)'],['⏳','Late · ordered, not delivered',nf0.format(nWo),'đã có order, chưa có billing','var(--warn)'],
+     ['🤝','Accounts có dòng trễ',nf0.format(arows.filter(r=>r.no+r.wo>0).length),`trên ${arows.length} account có lịch nhập`],
+     ['📋','Lines due',nf0.format(due),`planned date ≤ ${dmy(DATA_DATE)} (plan &gt; 0)`]])+`
+   <div class="grid two mt" style="align-items:stretch"><div class="card" id="inbChCard" style="display:flex;flex-direction:column"><h2><span class="ico">🛒</span>Late by channel<span class="hint">số dòng lịch nhập đến hạn (account × SKU × kỳ)</span></h2>
+       <div class="legend"><span><i style="background:var(--good-bar)"></i>Delivered</span><span><i style="background:var(--warn-bar)"></i>Ordered, chưa giao</span><span><i style="background:var(--bad-bar)"></i>No Order</span></div>${chBars||'<div class="empty">Không có dữ liệu</div>'}
+       <div class="mt">${table('inbch',accCols({k:'ch',l:'Channel',cls:'l'}).concat([{k:'na',l:'Accounts'}]),[ctot,...chr],{title:'Late by channel'})}</div></div>
+     <div class="card" id="inbAccCard" style="display:flex;flex-direction:column"><h2><span class="ico">🤝</span>Late by account<span class="hint">đủ danh sách account theo thứ tự chuẩn · % trên số dòng đến hạn</span></h2>${table('inbacc',accCols({k:'a',l:'Account',cls:'l',sort:r=>accIdx(r.acc)}).concat([{k:'ch',l:'Channel',cls:'l'}]),arows,{title:'Late by account',maxh:2000})}</div></div>
+   <div class="card mt"><h2><span class="ico">📋</span>Planned but not delivered<span class="hint">Order / Deli stores = store đã order / giao từ sau ngày dự kiến trước đó (cùng cửa sổ với trạng thái) · store qua DC tính theo DC cha · Total Stores = active store của account tại vùng</span></h2>
+   ${table('inb',[{k:'account',l:'Account',cls:'l',sort:r=>accIdx(r.acc)},{k:'kam',l:'KAM',cls:'l'},SKC('sku','Item name / code',r=>SKU_ORDER.indexOf(r.sku)),
      {k:'firstLate',l:'Planned',cls:'l',f:r=>dmy(r.firstLate)},{k:'days',l:'Days late',f:r=>`<span class="pill ${r.days>7?'bad':'warn'}">${r.days}</span>`},
-     {k:'nOrd',l:'Order (stores)',sep:true,f:r=>tick(r.nOrdN+r.nOrdS,true)+(r.noOrd?' <span class="pill bad">no order</span>':''),sort:r=>r.nOrdN+r.nOrdS},{k:'nDel',l:'Deli (stores)',f:r=>tick(r.nDelN+r.nDelS,true),sort:r=>r.nDelN+r.nDelS},
-     {k:'pr',l:'Delivered / due',f:r=>prog(r.pr,`${r.done}/${r.due}`),sort:r=>r.pr},{k:'note',l:'Note',cls:'wrap'}],out,{title:'Inbound late',maxh:720})}</div>`;
+     {k:'nTot',l:'Total Stores',sep:true,f:r=>r.nTot?nf0.format(r.nTot):'–'},{k:'nOrd',l:'Order Stores',f:r=>`${r.nOrd}${r.noOrd?' <span class="pill bad">no order</span>':''}`},{k:'pO',l:'% Ordered Stores',f:r=>prog(r.pO),sort:r=>r.pO},
+     {k:'nDel',l:'Deli Stores',sep:true},{k:'pD',l:'% Delivered Stores',f:r=>prog(r.pD),sort:r=>r.pD},
+     {k:'pr',l:'Delivered / due',sep:true,f:r=>prog(r.pr,`${r.done}/${r.due}`),sort:r=>r.pr},{k:'note',l:'Note (Deli / Total stores)',cls:'l'}],out,{groups:[{l:'',n:5},{l:'Stores',n:3,sep:1},{l:'',n:2,sep:1},{l:'',n:2,sep:1}],title:'Inbound late',maxh:720})}</div>`;
 }
+function fitInb(){ const L=document.getElementById('inbChCard'), R=document.getElementById('inbAccCard'); if(!L||!R) return; const t=R.querySelector('.tbl'); if(!t) return;
+  t.style.maxHeight='none'; const h=L.getBoundingClientRect().height; const other=R.getBoundingClientRect().height-t.getBoundingClientRect().height; t.style.maxHeight=Math.max(260,h-other)+'px'; }
 function vWarn(){ const ws=wkSet(), mx=wkMax(); const tol=0.5;
   const d1=[], d2=[], sw=[]; ['YP','MP','DN'].forEach(wh=>{ const m=agg(r=>r.sku,r=>r.sku,wh); Object.entries(m).forEach(([c,o])=>{ const s=stockOf(c,wh);
       if(o.wP>0&&o.wD+s<o.wP) d1.push({wh,code:c,name:(SKU[c]||{}).name||'',p:o.wP,d:o.wD,s,sh:o.wP-o.wD-s});
@@ -649,77 +736,98 @@ function vWarn(){ const ws=wkSet(), mx=wkMax(); const tol=0.5;
       sw.push({wh,code:c,name:(SKU[c]||{}).name||'',p:o.cP,o:o.cO,d:o.cD,s,gap:o.cO-o.cP}); }); });
   d1.sort((a,b)=>b.sh-a.sh); d2.sort((a,b)=>(a.flag===b.flag?0:(a.flag==='Warning Loss'?-1:1))||b.gap-a.gap);
   const aw=[]; ['YP','MP','DN'].forEach(wh=>{ const m=agg(r=>r.acc,r=>r.acc,wh); Object.entries(m).forEach(([a,o])=>{ if(a) aw.push({acc:a,wh,kam:(ACC.find(x=>x.acc===a)||{}).kam||'',p:o.cP,o:o.cO,gap:o.cO-o.cP}); }); });
-  const over=aw.filter(r=>r.gap>=tol).sort((a,b)=>b.gap-a.gap).slice(0,20), under=aw.filter(r=>r.gap<=-tol).sort((a,b)=>a.gap-b.gap).slice(0,20);
-  const sOver=sw.filter(r=>r.gap>=tol).sort((a,b)=>b.gap-a.gap).slice(0,20), sUnder=sw.filter(r=>r.gap<=-tol).sort((a,b)=>a.gap-b.gap).slice(0,20);
+  const over=aw.filter(r=>r.gap>=tol).sort((a,b)=>b.gap-a.gap), under=aw.filter(r=>r.gap<=-tol).sort((a,b)=>a.gap-b.gap);
+  const sOver=sw.filter(r=>r.gap>=tol).sort((a,b)=>b.gap-a.gap), sUnder=sw.filter(r=>r.gap<=-tol).sort((a,b)=>a.gap-b.gap);
+  const pmS=agg(r=>r.sku,r=>r.sku);
   // cancel / loss
   const cm={}; const ar=fA(); ar.forEach(r=>{ const o=cm[r.sku]=cm[r.sku]||{code:r.sku,name:(SKU[r.sku]||{}).name||'',brand:brandOf(r.sku),ob:0,xb:0,sb:0,lines:0,accs:new Set()}; const ov=V(r.ob,r.oa), cv=V(r.cb,r.ca); o.ob+=ov; if(cv>0){ o.lines++; o.accs.add(r.acc); if(r.xc) o.xb+=cv; else o.sb+=cv; } });
-  const crow=Object.values(cm).map(o=>({...o,cb:o.xb+o.sb,base:o.ob+o.xb,rate:(o.ob+o.xb)>0?(o.xb+o.sb)/(o.ob+o.xb):null,accTxt:[...o.accs].join(', ')})).filter(o=>o.cb>0).sort((a,b)=>b.cb-a.cb);
+  const crow=Object.values(cm).map(o=>({...o,cb:o.xb+o.sb,base:o.ob+o.xb,rate:(o.ob+o.xb)>0?(o.xb+o.sb)/(o.ob+o.xb):null,accTxt:[...o.accs].join(', '),sP:(pmS[o.code]||{}).sP||0,cP:(pmS[o.code]||{}).cP||0})).filter(o=>o.cb>0).sort((a,b)=>b.cb-a.cb);
   const cs=cancelStats(ar);
-  const mxc=Math.max(1,...crow.slice(0,15).map(o=>o.cb));
-  const cbars=crow.slice(0,15).map(o=>`<div class="hbar" title="${esc(o.name)} · ${esc(o.accTxt)}"><div class="nm"><b>${esc(o.code)}</b> <span class="muted">${esc(o.name)}</span></div><div class="tr"><i style="width:${o.sb/mxc*100}%;background:var(--warn-bar)"></i><i style="width:${o.xb/mxc*100}%;background:var(--bad-bar)"></i></div><div class="v"><b>${fmt(o.cb)}</b> <span class="muted">${pct1(o.rate)}</span></div></div>`).join('');
-  const nm=r=>`<b>${esc(r.code)}</b><span class="t muted" style="font-size:11px" title="${esc(r.name)}">${esc(r.name)}</span>`;
-  const skuWh=(id,list,cls,title)=>table(id,[{k:'code',l:'SKU',cls:'nm',f:nm},{k:'wh',l:'WH',cls:'l'},cN('p','Plan PTD'),cN('o','Order PTD'),{k:'gap',l:'Gap',f:r=>`<span class="pct ${cls}">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p),cN('s','Stock')],list,{title,maxh:520});
+  const skuWh=(id,list,cls,title)=>table(id,[SKC(),{k:'wh',l:'WH',cls:'l'},cN('p','Plan PTD'),cN('o','Order PTD'),{k:'gap',l:'Gap',f:r=>`<span class="pct ${cls}">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p),cN('s','Stock')],list,{title,maxh:620});
   main.innerHTML=kpiRow([['📉','Stock risk',nf0.format(d1.length),`SKU × WH Deli + Stock < Plan (${weekLbl()})`,d1.length?'var(--bad)':''],
      ['⚠️','Warning Loss',nf0.format(d2.filter(r=>r.flag==='Warning Loss').length),'SKU × WH, PTD',d2.some(r=>r.flag==='Warning Loss')?'var(--warn)':''],
      ['⬆️','Over plan',nf0.format(d2.length),'SKU × WH Order > Plan (PTD)'],
      ['⬇️','Account under plan',nf0.format(aw.filter(r=>r.gap<=-tol).length),'account × WH Order < Plan (PTD)'],
      ['✂️','Cancel / Loss',HAS_CANCEL?fmt(cs.cb):'n/a',HAS_CANCEL?`${pct1(cs.rate)} Order · ${crow.length} SKU`:'cần cập nhật VBA v4',cs.cb?'var(--bad)':''],
      ['🧺','Hủy cả đơn',HAS_CANCEL?fmt(cs.xb):'n/a','Cancellation Complete']])+`
-   <div class="grid two mt"><div class="card"><h2><span class="ico">✂️</span>Cancel / Loss by SKU<span class="hint">top 15 · ${uLbl()} · % = Cancel / Order gốc</span></h2>
-      <div class="legend"><span><i style="background:var(--warn-bar)"></i>Kho xuất thiếu (Rawdata cột Cancel)</span><span><i style="background:var(--bad-bar)"></i>Hủy cả đơn (Cancellation Complete)</span></div>${cbars||'<div class="empty">Không có Cancel 🎉</div>'}</div>
-    <div class="card"><h2><span class="ico">📋</span>Cancel rate by SKU</h2>${table('wc',[{k:'code',l:'SKU',cls:'nm',f:nm},{k:'brand',l:'Brand',cls:'l'},cN('base','Order gốc'),cN('sb','Xuất thiếu'),cN('xb','Hủy đơn'),cN('cb','Tổng Cancel'),{k:'rate',l:'%Loss',f:r=>`<span class="pct ${r.rate>=0.1?'lo':(r.rate>=0.03?'hi':'')}">${pct1(r.rate)}</span>`,sort:r=>r.rate},{k:'lines',l:'Dòng'},{k:'accTxt',l:'Accounts',cls:'wrap'}],crow,{title:'Cancel by SKU',maxh:420})}</div></div>
-   <div class="grid two mt"><div class="card"><h2><span class="ico">📉</span>Stock risk – selected weeks<span class="hint">Deli + Stock &lt; Plan · ${weekLbl()}</span></h2>${table('w1',[{k:'wh',l:'WH',cls:'l'},{k:'code',l:'SKU',cls:'nm',f:nm},cN('p','Plan'),cN('d','Deli'),cN('s','Stock'),{k:'sh',l:'Shortfall',f:r=>`<b class="pct lo">${fmt(r.sh)}</b>`}],d1,{title:'Stock risk',maxh:420})}</div>
-   <div class="card"><h2><span class="ico">⚠️</span>Warning Loss / Over Plan – PTD<span class="hint">Order &gt; Plan; Warning Loss khi Deli + Stock &lt; Order</span></h2>${table('w2',[{k:'wh',l:'WH',cls:'l'},{k:'code',l:'SKU',cls:'nm',f:nm},cN('p','Plan'),cN('o','Order'),cN('d','Deli'),cN('s','Stock'),{k:'gap',l:'Gap',f:r=>sgn(r.gap)},{k:'flag',l:'Flag',cls:'l',f:r=>`<span class="pill ${r.flag==='Warning Loss'?'bad':'warn'}">${r.flag}</span>`}],d2,{title:'Warning Loss',maxh:420})}</div></div>
-   <div class="grid two mt"><div class="card"><h2><span class="ico">⬆️</span>Top 20 SKU / WH over plan – PTD</h2>${skuWh('w5',sOver,'hi','Top SKU over')}</div>
-   <div class="card"><h2><span class="ico">⬇️</span>Top 20 SKU / WH under plan – PTD</h2>${skuWh('w6',sUnder,'lo','Top SKU under')}</div></div>
-   <div class="grid two mt"><div class="card"><h2><span class="ico">🤝</span>Top 20 account / WH over plan – PTD</h2>${table('w3',[{k:'acc',l:'Account',cls:'l'},{k:'wh',l:'WH',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('p','Plan'),cN('o','Order'),{k:'gap',l:'Gap',f:r=>`<span class="pct hi">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p)],over,{title:'Top over'})}</div>
-   <div class="card"><h2><span class="ico">🤝</span>Top 20 account / WH under plan – PTD</h2>${table('w4',[{k:'acc',l:'Account',cls:'l'},{k:'wh',l:'WH',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('p','Plan'),cN('o','Order'),{k:'gap',l:'Gap',f:r=>`<span class="pct lo">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p)],under,{title:'Top under'})}</div></div>`;
+   <div class="card mt"><h2><span class="ico">✂️</span>Cancel rate by SKU<span class="hint">sắp xếp theo lượng Loss giảm dần · ${uLbl()} · %Loss = Cancel / Order gốc · Xuất thiếu = Rawdata cột Cancel; Hủy đơn = Cancellation Complete</span></h2>${table('wc',[SKC(),{k:'brand',l:'Brand',cls:'l'},cN('sP','Season Plan',true),cN('cP','PTD Plan'),cN('base','Order gốc',true),cN('sb','Xuất thiếu'),cN('xb','Hủy đơn'),cN('cb','Tổng Cancel'),{k:'rate',l:'%Loss',f:r=>`<span class="pct ${r.rate>=0.1?'lo':(r.rate>=0.03?'hi':'')}">${pct1(r.rate)}</span>`,sort:r=>r.rate},{k:'lines',l:'Dòng',sep:true},{k:'accTxt',l:'Accounts',cls:'wrap'}],crow,{groups:[{l:'',n:2},{l:'Plan',n:2,sep:1},{l:'Order & Loss',n:5,sep:1},{l:'',n:2,sep:1}],title:'Cancel by SKU',maxh:900})}</div>
+   <div class="grid two mt"><div class="card"><h2><span class="ico">📉</span>Stock risk – selected weeks<span class="hint">Deli + Stock &lt; Plan · ${weekLbl()}</span></h2>${table('w1',[{k:'wh',l:'WH',cls:'l'},SKC(),cN('p','Plan'),cN('d','Deli'),cN('s','Stock'),{k:'sh',l:'Shortfall',f:r=>`<b class="pct lo">${fmt(r.sh)}</b>`}],d1,{title:'Stock risk',maxh:620})}</div>
+   <div class="card"><h2><span class="ico">⚠️</span>Warning Loss / Over Plan – PTD<span class="hint">Order &gt; Plan; Warning Loss khi Deli + Stock &lt; Order</span></h2>${table('w2',[{k:'wh',l:'WH',cls:'l'},SKC(),cN('p','Plan'),cN('o','Order'),cN('d','Deli'),cN('s','Stock'),{k:'gap',l:'Gap',f:r=>sgn(r.gap)},{k:'flag',l:'Flag',cls:'l',f:r=>`<span class="pill ${r.flag==='Warning Loss'?'bad':'warn'}">${r.flag}</span>`}],d2,{title:'Warning Loss',maxh:620})}</div></div>
+   <div class="grid two mt"><div class="card"><h2><span class="ico">⬆️</span>SKU / WH over plan – PTD<span class="hint">toàn bộ danh sách</span></h2>${skuWh('w5',sOver,'hi','Top SKU over')}</div>
+   <div class="card"><h2><span class="ico">⬇️</span>SKU / WH under plan – PTD<span class="hint">toàn bộ danh sách</span></h2>${skuWh('w6',sUnder,'lo','Top SKU under')}</div></div>
+   <div class="grid two mt"><div class="card"><h2><span class="ico">🤝</span>Account / WH over plan – PTD</h2>${table('w3',[{k:'acc',l:'Account',cls:'l'},{k:'wh',l:'WH',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('p','Plan'),cN('o','Order'),{k:'gap',l:'Gap',f:r=>`<span class="pct hi">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p)],over,{title:'Top over'})}</div>
+   <div class="card"><h2><span class="ico">🤝</span>Account / WH under plan – PTD</h2>${table('w4',[{k:'acc',l:'Account',cls:'l'},{k:'wh',l:'WH',cls:'l'},{k:'kam',l:'KAM',cls:'l'},cN('p','Plan'),cN('o','Order'),{k:'gap',l:'Gap',f:r=>`<span class="pct lo">${sgn(r.gap)}</span>`},cP('po','%Order',r=>r.o/r.p)],under,{title:'Top under'})}</div></div>`;
 }
-const WHC_INFO={WH09:['MP','Nhà máy'],WH33:['MP','Thương mại'],WH10:['YP','Nhà máy'],WH34:['YP','Thương mại'],WH15:['DN','Thương mại']};
+const WHC_INFO={WH09:['MP','Nhà máy'],WH33:['MP','Kho MT'],WH10:['YP','Nhà máy'],WH34:['YP','Kho MT'],WH15:['DN','Kho MT']};
 const COMM=new Set(['WH15','WH33','WH34']);
+const PROD_DAYS=11; // today -> +10
 function vStock(){ const sv=r=>st.unit==='Box'?r.q:r.a/1e6;
   const rows=SW.filter(r=>brOk(r.sku)&&skuQ(r.sku)&&(st.wh==='MT Total'||r.wh===(st.wh.startsWith('DN')?'DN':st.wh)));
   const codes=[...new Set(SW.map(r=>r.code))].sort((a,b)=>(['MP','YP','DN'].indexOf((WHC_INFO[a]||[''])[0])-['MP','YP','DN'].indexOf((WHC_INFO[b]||[''])[0]))||a.localeCompare(b));
-  const whOfCode={}; SW.forEach(r=>whOfCode[r.code]=r.wh);
   const tot=rows.reduce((s,r)=>s+sv(r),0), com=rows.filter(r=>COMM.has(r.code)).reduce((s,r)=>s+sv(r),0);
-  // remaining plan (season plan - deli to date) by sku, MT Total
-  const m=agg(r=>r.sku,r=>r.sku,'MT Total'); let remT=0, nextT=0; const nx=W.filter(w=>w.i>CUR&&w.i<=CUR+4).map(w=>w.i);
-  const nextPlan={}; fP('MT Total').forEach(r=>{ if(nx.includes(r.wi)) nextPlan[r.sku]=(nextPlan[r.sku]||0)+V(r.box,r.amt); });
-  const bySku={}; rows.forEach(r=>{ const o=bySku[r.sku]=bySku[r.sku]||{code:r.sku,brand:brandOf(r.sku),name:(SKU[r.sku]||{}).name||'',t:0,MP:0,YP:0,DN:0}; const v=sv(r); o[r.code]=(o[r.code]||0)+v; o[r.wh]+=v; o.t+=v; });
-  SKU_ORDER.filter(c=>brOk(c)&&skuQ(c)&&!bySku[c]&&m[c]).forEach(c=>bySku[c]={code:c,brand:brandOf(c),name:SKU[c].name,t:0,MP:0,YP:0,DN:0});
-  const srows=Object.values(bySku).map(o=>{ const g=m[o.code]||ZERO; const rem=Math.max(0,g.sP-g.aD); remT+=rem; const np=nextPlan[o.code]||0; nextT+=np; return {...o,rem,np,cover:rem>0?o.t/rem:null,wk:np>0?o.t/(np/4):null}; })
+  const m=agg(r=>r.sku,r=>r.sku); const scope=planScope();
+  const whsP=prodWh(); const twS=TODAY, twE=TW_END, nwS=NW?NW.start:null, nwE=NW?addDay(NW.start,6):null;
+  const bySku={}; rows.forEach(r=>{ const o=bySku[r.sku]=bySku[r.sku]||{code:r.sku,brand:brandOf(r.sku),name:(SKU[r.sku]||{}).name||'',t:0,MP:0,YP:0,DN:0}; const v=sv(r); o[r.wh]+=v; o.t+=v; });
+  SKU_ORDER.filter(c=>brOk(c)&&skuQ(c)&&!bySku[c]&&(scope.has(c)||PROD.some(p=>p.sku===c))).forEach(c=>bySku[c]={code:c,brand:brandOf(c),name:SKU[c].name,t:0,MP:0,YP:0,DN:0});
+  let remT=0;
+  const srows=Object.values(bySku).map(o=>{ const g=m[o.code]||ZERO; const pr=w=>({r:whsP.includes(w)?VB(prodSum(o.code,[w],twS,twE),o.code):0,n:whsP.includes(w)&&NW?VB(prodSum(o.code,[w],nwS,nwE),o.code):0});
+    const a=pr('MP'), b=pr('YP'); const rem=a.r+b.r, nxt=a.n+b.n; const need=g.cP-g.cD, sup=o.t+rem+nxt, sp=need>0?sup/need:null; remT+=Math.max(0,g.sP-g.aD);
+    let stt=''; if(g.cP>0){ if(need<=0) stt='ok|Đã giao đủ PTD'; else if(sp>=1) stt='ok|Đủ hàng'; else if(sp>=0.8) stt='warn|Sát · thiếu '+fmt(need-sup); else stt='bad|Thiếu '+fmt(need-sup); } else stt='mute|Không có Plan PTD';
+    return {...o,rMP:a.r,rYP:b.r,rT:rem,nMP:a.n,nYP:b.n,nT:nxt,need,sp,stt}; })
     .sort((a,b)=>((BR_IDX[a.brand]??99)-(BR_IDX[b.brand]??99))||SKU_ORDER.indexOf(a.code)-SKU_ORDER.indexOf(b.code));
-  const bm={}; srows.forEach(o=>{ const b=bm[o.brand]=bm[o.brand]||{brand:o.brand,MP:0,YP:0,DN:0,t:0,rem:0,n:0}; ['MP','YP','DN','t','rem'].forEach(k=>b[k]+=o[k]); b.n++; });
+  const bm={}; srows.forEach(o=>{ const b=bm[o.brand]=bm[o.brand]||{brand:o.brand,MP:0,YP:0,DN:0,t:0,n:0}; ['MP','YP','DN','t'].forEach(k=>b[k]+=o[k]); b.n++; });
   const brows=Object.values(bm).sort((a,b)=>(BR_IDX[a.brand]??99)-(BR_IDX[b.brand]??99)); const mxB=Math.max(1,...brows.flatMap(b=>[b.MP,b.YP,b.DN]));
   const heat=(v)=>{ const a=Math.min(.55,v/mxB*.55+(v>0?.06:0)); return `<span style="display:block;margin:-5px -7px;padding:5px 7px;background:rgba(42,120,214,${a.toFixed(3)})">${fmt(v)}</span>`; };
-  const btot={brand:'G.Total',MP:0,YP:0,DN:0,t:0,rem:0,_cls:'tot',_fixed:true,_top:true}; brows.forEach(b=>['MP','YP','DN','t','rem'].forEach(k=>btot[k]+=b[k]));
-  const cm={}; rows.forEach(r=>{ const o=cm[r.code]=cm[r.code]||{code:r.code,wh:r.wh,type:(WHC_INFO[r.code]||['',''])[1]||(COMM.has(r.code)?'Thương mại':''),q:0,n:0}; o.q+=sv(r); if(r.q>0) o.n++; });
+  const btot={brand:'G.Total',MP:0,YP:0,DN:0,t:0,_cls:'tot',_fixed:true,_top:true}; brows.forEach(b=>['MP','YP','DN','t'].forEach(k=>btot[k]+=b[k]));
+  const cm={}; rows.forEach(r=>{ const o=cm[r.code]=cm[r.code]||{code:r.code,wh:r.wh,type:(WHC_INFO[r.code]||['',''])[1]||(COMM.has(r.code)?'Kho MT':''),q:0,n:0}; o.q+=sv(r); if(r.q>0) o.n++; });
   const crow=codes.filter(c=>cm[c]).map(c=>({...cm[c],sh:tot?cm[c].q/tot:null,_cls:COMM.has(c)?'com':''}));
-  const covCls=v=>v==null?'':(v>=1?'ok':(v>=0.5?'hi':'lo'));
-  main.innerHTML=kpiRow([['🏭','Tổng tồn SKU Tết',fmt(tot),`${uLbl()} · ${srows.filter(r=>r.t>0).length} SKU có tồn`],['🚚','Kho thương mại',fmt(com),`WH15 · WH33 · WH34 = ${pct(tot?com/tot:null)}`],
-     ['🏗️','Kho nhà máy',fmt(tot-com),`WH09 · WH10 = ${pct(tot?(tot-com)/tot:null)}`],['🎯','Plan còn lại',fmt(remT),'Plan cả kỳ − Deli lũy kế'],
-     ['🧮','Tồn / Plan còn lại',pct(remT?tot/remT:null),'mức đáp ứng của tồn hiện tại',remT&&tot/remT<0.5?'var(--bad)':''],['📆','Số tuần tồn',nextT?nf1.format(tot/(nextT/4)):'–','so với Plan TB 4 tuần tới']])+`
-   ${geoActive()||st.kam!=='All'||st.acc!=='All'||st.ch!=='All'?'<div class="geo-note mt">ℹ️ Tồn kho không chia theo KAM / Account / Channel / Tỉnh / Office – các bộ lọc này chỉ ảnh hưởng cột Plan còn lại.</div>':''}
+  // ---- production tables ----
+  const days=[...Array(PROD_DAYS)].map((_,i)=>addDay(TODAY,i)); const dW=days.map(d=>weekOfDate(d));
+  const wgr=[]; days.forEach((d,i)=>{ const w=dW[i]?dW[i].w:'—'; if(wgr.length&&wgr[wgr.length-1].w===w) wgr[wgr.length-1].n++; else wgr.push({w,n:1}); });
+  const stockWh=(c,w)=>SW.filter(r=>r.sku===c&&r.wh===w).reduce((s,r)=>s+sv(r),0);
+  const pskus=[]; ['MP','YP'].filter(w=>whsP.includes(w)).forEach(w=>{ const set=new Set(PROD.filter(p=>p.wh===w).map(p=>p.sku)); SKU_ORDER.filter(c=>set.has(c)&&brOk(c)&&skuQ(c)).sort((a,b)=>((BR_IDX[brandOf(a)]??99)-(BR_IDX[brandOf(b)]??99))||SKU_ORDER.indexOf(a)-SKU_ORDER.indexOf(b)).forEach(c=>pskus.push({w,c})); });
+  const open=!!st.open.shift; const t3=[], t4=[];
+  pskus.forEach(({w,c})=>{ const base={wh:w,brand:brandOf(c),code:c,name:(SKU[c]||{}).name||c,stk:stockWh(c,w)};
+    const cell=(d,sh,f)=>{ const x=(PMAP[c+'|'+w+'|'+d]||{})[sh]; return x?f(x):null; };
+    ['T','D','N'].forEach(sh=>{ if(sh!=='T'&&!open) return; const r={...base,_cls:'sh'+sh,shift:{T:'Total',D:'Day',N:'Night'}[sh],first:sh==='T'}; days.forEach((d,i)=>r['d'+i]=cell(d,sh,x=>VB(x.p,c))); t3.push(r); });
+    [['Plan',x=>VB(x.p,c)],['Actual',x=>VB(x.a,c)],['Gap',x=>VB(x.a-x.p,c)]].forEach(([lab,f],j)=>{ const r={...base,_cls:j===0?'shT':'shD',shift:lab,first:j===0}; days.forEach((d,i)=>{ const v=cell(d,'T',f); r['d'+i]=(lab!=='Plan'&&d>TODAY)?null:v; }); t4.push(r); }); });
+  const dayCols=(gap)=>days.map((d,i)=>({k:'d'+i,l:dmy(d),sep:i===0||(dW[i]&&dW[i-1]&&dW[i].i!==dW[i-1].i),f:r=>{ const v=r['d'+i]; if(v==null) return '<span class="muted">–</span>'; if(gap&&r.shift==='Gap') return `<span class="pct ${v<0?'lo':(v>0?'ok':'')}">${sgn(v)}</span>`; return fmt(v); },sort:r=>r['d'+i]||0}));
+  const fixC=[{k:'wh',l:'WH',cls:'l',f:r=>r.first?`<b>${r.wh}</b>`:''},{k:'brand',l:'Brand',cls:'l',f:r=>r.first?esc(r.brand):''},{k:'code',l:'Item name / code',cls:'sk',f:r=>r.first?skuCell(r.code,r.name):''},{k:'stk',l:'Current Stock',f:r=>r.first?fmt(r.stk):''},{k:'shift',l:'',cls:'l',f:r=>`<span class="${r.first?'':'muted'}">${r.shift}</span>`}];
+  const noFut=!PROD.some(p=>p.d>=TODAY&&p.p>0);
+  const sttPill2=s=>{ const [c,t]=s.split('|'); return `<span class="pill ${c}">${t}</span>`; };
+  main.innerHTML=kpiRow([['🏭','Tổng tồn SKU Tết',fmt(tot),`${uLbl()} · ${srows.filter(r=>r.t>0).length} SKU có tồn`],['🚚','Kho MT',fmt(com),`WH15 · WH33 · WH34 = ${pct(tot?com/tot:null)}`],
+     ['🏗️','Kho nhà máy',fmt(tot-com),`WH09 · WH10 = ${pct(tot?(tot-com)/tot:null)}`],['⚙️',`SX còn lại ${TW?TW.w:''}`,fmt(srows.reduce((s,r)=>s+r.rT,0)),`từ ${dmy(TODAY)} → ${dmy(TW_END)}`],
+     ['📅',`SX ${NW?NW.w:'tuần sau'}`,fmt(srows.reduce((s,r)=>s+r.nT,0)),NW?`${dmy(NW.start)} → ${dmy(addDay(NW.start,6))}`:'–'],['🎯','Plan còn lại',fmt(remT),'Plan cả kỳ − Deli lũy kế']])+`
+   ${geoActive()||st.kam!=='All'||st.acc!=='All'||st.ch!=='All'?'<div class="geo-note mt">ℹ️ Tồn kho và sản xuất không chia theo KAM / Account / Channel / Tỉnh / Office – các bộ lọc này chỉ ảnh hưởng phần nhu cầu (Plan).</div>':''}
+   ${noFut?`<div class="geo-note mt">ℹ️ Sheet Production hiện chỉ có dữ liệu đến ${dmy(PROD.reduce((m,p)=>p.d>m?p.d:m,''))}. Các cột sản xuất từ hôm nay trở đi đang để trống – dán kế hoạch các ngày tới vào sheet Production rồi bấm Update để web tự nhận.</div>`:''}
    <div class="grid tw mt"><div class="card"><h2><span class="ico">🧱</span>Stock by Brand × WH<span class="hint">${uLbl()} · màu đậm = tồn nhiều</span></h2>
-     ${table('stb',[{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},{k:'MP',l:'MP',f:r=>r._cls?fmt(r.MP):heat(r.MP)},{k:'DN',l:'DN',f:r=>r._cls?fmt(r.DN):heat(r.DN)},{k:'YP',l:'YP',f:r=>r._cls?fmt(r.YP):heat(r.YP)},cN('t','Total',true),cN('rem','Plan còn lại'),{k:'cv',l:'Tồn / Plan còn lại',f:r=>`<span class="pct ${covCls(r.rem?r.t/r.rem:null)}">${pct(r.rem?r.t/r.rem:null)}</span>`,sort:r=>r.rem?r.t/r.rem:-1}],[btot,...brows],{title:'Stock by brand x WH'})}</div>
-    <div class="card"><h2><span class="ico">🏬</span>Stock by warehouse<span class="hint">mapping Setting cột V (WH) → AD (WH2) · nền xanh = kho thương mại đi hàng</span></h2>
+     ${table('stb',[{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},{k:'MP',l:'MP',f:r=>r._cls?fmt(r.MP):heat(r.MP)},{k:'DN',l:'DN',f:r=>r._cls?fmt(r.DN):heat(r.DN)},{k:'YP',l:'YP',f:r=>r._cls?fmt(r.YP):heat(r.YP)},cN('t','Total',true)],[btot,...brows],{title:'Stock by brand x WH'})}</div>
+    <div class="card"><h2><span class="ico">🏬</span>Stock by warehouse<span class="hint">mapping Setting cột V (WH) → AD (WH2) · nền xanh = Kho MT</span></h2>
      ${table('stw',[{k:'code',l:'Mã kho',cls:'l',f:r=>`<b>${esc(r.code)}</b>`},{k:'wh',l:'Kho',cls:'l'},{k:'type',l:'Loại',cls:'l',f:r=>`<span class="pill ${COMM.has(r.code)?'ok':'mute'}">${esc(r.type||'–')}</span>`},cN('q','Tồn'),{k:'sh',l:'Tỷ trọng',f:r=>prog(r.sh,pct(r.sh)),sort:r=>r.sh},{k:'n',l:'SKU có tồn'}],crow,{title:'Stock by warehouse'})}
      <div class="foot">MP = WH09 (nhà máy) + WH33 · YP = WH10 (nhà máy) + WH34 · DN = WH15.</div></div></div>
-   <div class="card mt"><h2><span class="ico">📦</span>Stock by SKU<span class="hint">${uLbl()} · Số tuần tồn = Tồn / Plan TB 4 tuần tới (MT Total)</span></h2>
-   ${table('sts',[{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},{k:'code',l:'Mã SP',cls:'l',f:r=>`<b>${esc(r.code)}</b>`,sort:r=>SKU_ORDER.indexOf(r.code)},{k:'name',l:'Tên sản phẩm',cls:'nm',f:r=>`<span class="t" title="${esc(r.name)}">${esc(r.name)}</span>`},
-     ...codes.map((c,i)=>({k:c,l:c,cls:COMM.has(c)?'num comc':'num',sep:i===0||whOfCode[c]!==whOfCode[codes[i-1]],f:r=>fmt(r[c]||0),sort:r=>r[c]||0})),cN('MP','MP',true),cN('YP','YP'),cN('DN','DN'),cN('t','Total'),cN('rem','Plan còn lại',true),{k:'cover',l:'Tồn / Plan còn lại',f:r=>`<span class="pct ${covCls(r.cover)}">${pct(r.cover)}</span>`,sort:r=>r.cover==null?-1:r.cover},{k:'wk',l:'Số tuần tồn',f:r=>r.wk==null?'–':nf1.format(r.wk),sort:r=>r.wk==null?-1:r.wk}],srows,{groups:[{l:'',n:3},{l:'Theo mã kho',n:codes.length,sep:1},{l:'Theo kho',n:4,sep:1},{l:'Đáp ứng',n:3,sep:1}],title:'Stock by SKU',maxh:720})}
-   </div>`;
+   <div class="card mt"><h2><span class="ico">📦</span>Stock by SKU<span class="hint">${uLbl()} · Fulfillment = (Stock + SX còn lại tuần này + SX tuần sau) / (Plan PTD − Deli PTD) · ≥100% Đủ · 80–100% Sát · &lt;80% Thiếu</span></h2>
+   ${table('sts',[{k:'brand',l:'Brand',cls:'l',sort:r=>BR_IDX[r.brand]??99},SKC(),cN('MP','MP',true),cN('YP','YP'),cN('DN','DN'),cN('t','Total'),
+     cN('rMP','MP',true),cN('rYP','YP'),cN('rT','Total'),cN('nMP','MP',true),cN('nYP','YP'),cN('nT','Total'),
+     cN('need','Nhu cầu PTD còn thiếu',true),{k:'sp',l:'Supply %',f:r=>r.sp==null?'<span class="muted">–</span>':`<span class="pct ${r.sp>=1?'ok':(r.sp>=0.8?'hi':'lo')}">${pct(r.sp)}</span>`,sort:r=>r.sp==null?9e9:r.sp},{k:'stt',l:'Fulfillment / Coverage Status',cls:'l',f:r=>sttPill2(r.stt),sort:r=>r.sp==null?9e9:r.sp}],
+     srows,{groups:[{l:'',n:2},{l:'Current Stock',n:4,sep:1},{l:`Rem. This Week Prod. (${dmy(TODAY)}→${dmy(TW_END)})`,n:3,sep:1},{l:`Next Week Prod. ${NW?'('+NW.w+')':''}`,n:3,sep:1},{l:'Fulfillment',n:3,sep:1}],title:'Stock by SKU',maxh:720})}</div>
+   <div class="card mt"><h2><span class="ico">🗓️</span>Production Schedule by SKU by Day<span class="hint">kế hoạch sản xuất (cột Plan) ${dmy(TODAY)} → ${dmy(days[days.length-1])} · ${uLbl()}</span> <button class="tbtn" id="shBtn" style="padding:3px 10px;font-size:12px">${open?'▾ Ẩn ca Day / Night':'▸ Hiện ca Day / Night'}</button></h2>
+   ${table('prs',[...fixC,...dayCols(false)],t3.map(r=>({...r,_fixed:true})),{groups:[{l:'',n:5},...wgr.map((g,i)=>({l:g.w,n:g.n,sep:1}))],title:'Production schedule',maxh:720})}</div>
+   <div class="card mt"><h2><span class="ico">📈</span>Actual Production Tracking by Day<span class="hint">dòng Total · Plan / Actual (cột Result) / Gap = Actual − Plan · ngày tương lai chỉ có Plan</span></h2>
+   ${table('pra',[...fixC,...dayCols(true)],t4.map(r=>({...r,_fixed:true})),{groups:[{l:'',n:5},...wgr.map((g,i)=>({l:g.w,n:g.n,sep:1}))],title:'Actual production',maxh:720})}</div>`;
+  const b=document.getElementById('shBtn'); if(b) b.onclick=()=>{ st.open.shift=!st.open.shift; render(); };
 }
 // ================= CONTROLS =================
 function fill(el,opts,cur){ el.innerHTML=opts.map(o=>{ const v=Array.isArray(o)?o[0]:o, l=Array.isArray(o)?o[1]:o; return `<option value="${esc(v)}"${String(v)===String(cur)?' selected':''}>${esc(l)}</option>`; }).join(''); }
 function syncControls(){
   fill($('#fKam'),['All',...KAMS],st.kam); fill($('#fCh'),['All',...CHANNELS],st.ch);
   const accs=ACC.filter(a=>(st.kam==='All'||a.kam===st.kam)&&(st.ch==='All'||a.ch===st.ch)).map(a=>a.acc); if(st.acc!=='All'&&!accs.includes(st.acc)) st.acc='All';
-  fill($('#fAcc'),['All',...accs],st.acc); fill($('#fSg'),['All',...SGS],st.sg); fill($('#fWh'),WHS,st.wh); fill($('#fBrand'),['All',...BR.map(b=>b.b)],st.brand);
+  fill($('#fAcc'),['All',...accs],st.acc);
+  const a2s=[...new Set(A.filter(r=>kamOk(r)&&accOk(r)&&chOk(r)).map(r=>r.a2).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi')); if(st.a2!=='All'&&!a2s.includes(st.a2)) st.a2='All';
+  fill($('#fA2'),['All',...a2s],st.a2); fill($('#fSg'),['All',...SGS],st.sg); fill($('#fWh'),WHS,st.wh); fill($('#fBrand'),['All',...BR.map(b=>b.b)],st.brand);
   const offs=OFFICES.filter(o=>st.sg==='All'||STORES.some(s=>s.office===o&&s.sg===st.sg)); if(st.office!=='All'&&!offs.includes(st.office)) st.office='All';
   const provs=PROVS.filter(p=>(st.sg==='All'&&st.office==='All')||STORES.some(s=>s.prov===p&&(st.sg==='All'||s.sg===st.sg)&&(st.office==='All'||s.office===st.office))); if(st.prov!=='All'&&!provs.includes(st.prov)) st.prov='All';
   fill($('#fOff'),['All',...offs],st.office); fill($('#fProv'),['All',...provs],st.prov);
-  fill($('#fStatus'),['All','Over Plan','Warning Loss','Low Stock','Late Inbound'],st.status);
+  fill($('#fStatus'),['All','Over Plan','Under Plan','Warning Loss','Low Stock','Late Inbound'],st.status);
   $('#wkBtn').textContent='▦ '+weekLbl()+(st.weeks.length>1?` (${st.weeks.length})`:'');
   $('#wkPop').innerHTML=`<div class="grid5">${W.map(w=>`<label><input type="checkbox" value="${w.i}" ${st.weeks.includes(w.i)?'checked':''}>${w.w} <span class="muted">${dmy(w.start)}</span></label>`).join('')}</div>
     <div class="acts"><button data-a="cur">Current week</button><button data-a="ptd">W44 → current</button><button data-a="all">All weeks</button><button data-a="close">Done</button></div>`;
@@ -734,11 +842,11 @@ function syncControls(){
 function placeFilters(){ $('#filters').style.top=document.querySelector('.topbar').offsetHeight+'px'; }
 function render(){ TABLES.length=0; binders.length=0; INB_CACHE=null; prepQ(); syncControls(); save();
   try{ ({overview:vOverview,sku:vSku,store:vStore,acc:vAcc,yag:vYag,inb:vInb,warn:vWarn,stock:vStock}[st.tab]||vOverview)();
-    if(geoActive()&&!['store','stock'].includes(st.tab)) main.insertAdjacentHTML('afterbegin',`<div class="geo-note">📍 Đang lọc ${st.prov!=='All'?'Tỉnh <b>'+esc(st.prov)+'</b>':''}${st.prov!=='All'&&st.office!=='All'?' · ':''}${st.office!=='All'?'Office <b>'+esc(st.office)+'</b>':''}: Plan không có theo Tỉnh/Office nên các cột Plan, %, thanh tiến độ hiển thị “–”; Order/Deli đã được lọc.</div>`);
+    if(geoActive()&&!['store','stock'].includes(st.tab)) main.insertAdjacentHTML('afterbegin',`<div class="geo-note">📍 Đang lọc ${geoTxt()}: Plan không có theo Account 2/Tỉnh/Office nên các cột Plan, %, thanh tiến độ hiển thị “–”; Order/Deli/Cancel/Waiting đã được lọc.</div>`);
   }catch(e){ main.innerHTML=`<div class="err"><h2>Something went wrong</h2><pre>${esc(e.stack||e)}</pre></div>`; console.error(e); }
-  binders.forEach(f=>f()); bindSort(); placeFilters(); }
+  binders.forEach(f=>f()); bindSort(); placeFilters(); if(st.tab==='inb') fitInb(); }
 const on=(id,ev,fn)=>$(id).addEventListener(ev,fn);
-[['#fKam','kam'],['#fCh','ch'],['#fAcc','acc'],['#fSg','sg'],['#fOff','office'],['#fProv','prov'],['#fWh','wh'],['#fBrand','brand'],['#fStatus','status']].forEach(([id,k])=>on(id,'change',e=>{ st[k]=e.target.value; st.dz=null; render(); }));
+[['#fKam','kam'],['#fCh','ch'],['#fAcc','acc'],['#fA2','a2'],['#fSg','sg'],['#fOff','office'],['#fProv','prov'],['#fWh','wh'],['#fBrand','brand'],['#fStatus','status']].forEach(([id,k])=>on(id,'change',e=>{ st[k]=e.target.value; st.dz=null; render(); }));
 let qt; on('#fQ','input',e=>{ clearTimeout(qt); qt=setTimeout(()=>{st.q=e.target.value;render();},250); });
 document.querySelectorAll('#fUnit button').forEach(b=>b.onclick=()=>{st.unit=b.dataset.u;render();});
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{st.tab=b.dataset.t;render();window.scrollTo(0,0);});
